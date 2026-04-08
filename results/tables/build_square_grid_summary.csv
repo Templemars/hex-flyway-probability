@@ -1,0 +1,2 @@
+rows,lon_min,lon_max,lat_min,lat_max,lon_spacing_deg,lat_spacing_deg
+64800,-180.0,179.0,-89.5,89.5,1.0,1.0
