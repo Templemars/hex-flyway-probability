@@ -26,7 +26,7 @@
 
 ## Practical next design choices
 
-12. Which representative subset of the original 195 weight combinations should be used for the early prototype phase?
+12. How should the agreed prototype weight subset be implemented and labeled in code and notes?
 13. What fairness criterion should be hard-coded into the square-versus-hex benchmark design?
 14. What is the minimum clean prototype needed before scaling to all years?
 15. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?
