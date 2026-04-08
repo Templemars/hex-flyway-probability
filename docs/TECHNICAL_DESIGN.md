@@ -189,7 +189,20 @@ From the previous project, the guide scripts already identify a likely first reu
 - `SScoordinates.csv`
 - `NScoordinates.csv`
 
+These files have now been copied into the new project so that the sequel can remain self-contained under:
+- `data/raw/benchmark_from_2025/`
+
 The first new prototype will probably only need a subset of these as active inputs, but they define the initial benchmark package.
+
+### Coefficient ordering convention for the Python sequel
+
+Use the Python / paper ordering consistently in the new project:
+- `a = wind`
+- `b = crosswind`
+- `c = distance`
+- `d = food`
+
+Do not reuse the old R notebook ordering internally in the new codebase. If old files or notebooks use a different ordering, translate them explicitly and document the translation.
 
 ## 12. Immediate implementation plan
 
