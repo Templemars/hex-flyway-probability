@@ -4,7 +4,7 @@
 
 1. Which tern population / flyway should be used first?
 2. What is the fairest way to compare square and hex grids?
-3. Which secondary metric should accompany RMSE?
+3. Which genuinely non-redundant secondary metric should accompany RMSE, given that the 2025 paper's RMSE already used median longitude per 10° latitude band?
 4. Should crosswind be included in the first coarse weight-set table or added later?
 5. Should grid geometry and polar distortion be quantified explicitly, in addition to predictive fit?
 
