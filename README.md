@@ -46,3 +46,8 @@ For literature work:
 - store PDFs once under `refs/`
 - write structured summaries under `notes/literature/`
 - build cumulative synthesis notes instead of re-reading papers from scratch each time
+
+For implementation and reporting:
+- each meaningful script should produce clear outputs a human can inspect quickly
+- default expectation: a short text summary, a small table in `results/tables/`, and 1 to 3 quick-look figures in `results/figures/`
+- a script is not really finished if it produces data silently but gives no readable reporting

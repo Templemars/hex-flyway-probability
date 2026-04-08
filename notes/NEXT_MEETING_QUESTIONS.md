@@ -29,5 +29,6 @@
 12. How should the agreed prototype weight subset be implemented and labeled in code and notes?
 13. How should H3 resolution 3 be justified clearly in the methods as the closest global-mean benchmark match rather than an exact equivalent?
 14. Which of the copied benchmark files in `data/raw/benchmark_from_2025/` should be treated as active prototype inputs versus benchmark-only artifacts?
-15. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?
-16. How should old R-generated benchmark files be translated and labeled so their coefficient ordering is never confused with the new Python convention?
+15. How should the reporting template be implemented consistently across scripts, especially the first grid-building and comparison scripts?
+16. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?
+17. How should old R-generated benchmark files be translated and labeled so their coefficient ordering is never confused with the new Python convention?
