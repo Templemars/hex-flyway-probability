@@ -21,6 +21,7 @@ The broader goal is to test whether migratory flyways are better represented as 
 - `src/scripts/` reusable code
 - `results/figures/` generated figures
 - `results/tables/` generated tables
+- `results/reports/` short human-readable milestone reports in Markdown (optionally exported to PDF)
 - `refs/` relevant papers and references
 - `notes/literature/` structured paper notes and cross-paper synthesis
 
@@ -50,4 +51,5 @@ For literature work:
 For implementation and reporting:
 - each meaningful script should produce clear outputs a human can inspect quickly
 - default expectation: a short text summary, a small table in `results/tables/`, and 1 to 3 quick-look figures in `results/figures/`
+- for substantial steps, also write a short Markdown report in `results/reports/`, with optional later PDF export
 - a script is not really finished if it produces data silently but gives no readable reporting
