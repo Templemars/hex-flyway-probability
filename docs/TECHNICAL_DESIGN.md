@@ -194,6 +194,23 @@ These files have now been copied into the new project so that the sequel can rem
 
 The first new prototype will probably only need a subset of these as active inputs, but they define the initial benchmark package.
 
+### Input structure noted from the copied benchmark files
+
+- `springMeanSpeed.csv` contains gridded rows with at least the fields:
+  - `lat`
+  - `lon`
+  - `speed`
+  - `u10`
+  - `v10`
+  - `dir`
+- `chlSpring.csv` contains gridded rows with:
+  - `lat`
+  - `lon`
+  - `chlor_a`
+- both CSVs include an extra index column from export that should be dropped in Python preprocessing
+
+This means the new Python implementation can reconstruct wind-derived movement quantities directly from the CSV package without first going back to NetCDF.
+
 ### Coefficient ordering convention for the Python sequel
 
 Use the Python / paper ordering consistently in the new project:
