@@ -24,6 +24,10 @@ Create the first benchmark square grid from the cleaned environmental tables.
 - summary table: `results/tables/build_square_grid_summary.csv`
 - figure: `results/figures/build_square_grid_points.png`
 
+## Quick-look figure
+
+![Square benchmark grid points](../figures/build_square_grid_points.png)
+
 ## Interpretation
 The benchmark square grid has now been reconstructed directly from the cleaned environmental table. It is a global 1° x 1° lat-lon support grid and will serve as the square-grid side of the first benchmark comparison.
 

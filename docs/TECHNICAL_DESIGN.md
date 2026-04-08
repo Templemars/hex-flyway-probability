@@ -268,7 +268,7 @@ Do not reuse the old R notebook ordering internally in the new codebase. If old 
 ## 14. Immediate coding targets
 
 1. `src/notebooks/01_hex_grid_prototype.ipynb`
-2. `src/scripts/build_square_grid.py`
+2. `src/scripts/03_build_square_grid.py`
 3. `src/scripts/build_hex_grid.py`
 4. `src/scripts/build_dijkstra_inputs.py`
 5. `src/notebooks/02_square_vs_hex_benchmark.ipynb`
