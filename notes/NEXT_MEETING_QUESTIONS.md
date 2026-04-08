@@ -29,3 +29,4 @@
 12. What should the first coarse weight-set table look like?
 13. What fairness criterion should be hard-coded into the square-versus-hex benchmark design?
 14. What is the minimum clean prototype needed before scaling to all years?
+15. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?

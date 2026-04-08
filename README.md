@@ -22,6 +22,7 @@ The broader goal is to test whether migratory flyways are better represented as 
 - `results/figures/` generated figures
 - `results/tables/` generated tables
 - `refs/` relevant papers and references
+- `notes/literature/` structured paper notes and cross-paper synthesis
 
 ## Current core documents
 
@@ -40,3 +41,8 @@ After each substantive project discussion:
 - write dated meeting notes in `notes/meetings/YYYY-MM-DD.md`
 - update the relevant core project documents in `docs/`
 - overwrite `notes/NEXT_MEETING_QUESTIONS.md` with the current open agenda for the next session
+
+For literature work:
+- store PDFs once under `refs/`
+- write structured summaries under `notes/literature/`
+- build cumulative synthesis notes instead of re-reading papers from scratch each time
