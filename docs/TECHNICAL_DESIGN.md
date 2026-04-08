@@ -61,7 +61,9 @@ Current selection logic:
 - the benchmark CSVs are on a 1° global lat-lon grid
 - H3 resolution should therefore be chosen by matching the global-mean area of a 1° cell as closely as possible
 - a first comparison table has already been generated in `data/processed/grids/h3_resolution_comparison.csv`
-- this comparison shows that the target lies between H3 resolutions 3 and 4, so the final benchmark choice must be treated as an approximation and justified explicitly
+- this comparison shows that the target lies between H3 resolutions 3 and 4
+- benchmark choice for the first implementation: **H3 resolution 3**
+- this must still be described explicitly as the closest standard H3 match in global-mean area terms, not as an exact area-equivalent replacement for the 1° grid
 
 Outputs:
 - hex cell geometry table
