@@ -33,3 +33,10 @@ The broader goal is to test whether migratory flyways are better represented as 
 ## Status
 
 Project initialized. Scientific framing is in place. Next step is to prototype the hex grid and the transition framework.
+
+## Working process
+
+After each substantive project discussion:
+- write dated meeting notes in `notes/meetings/YYYY-MM-DD.md`
+- update the relevant core project documents in `docs/`
+- overwrite `notes/NEXT_MEETING_QUESTIONS.md` with the current open agenda for the next session
