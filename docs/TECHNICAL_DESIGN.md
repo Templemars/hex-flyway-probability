@@ -169,7 +169,29 @@ For annual analyses, compare annual simulated flyways to:
 
 This separates biological mismatch from climate-driven model variability.
 
-## 10. Immediate implementation plan
+## 10. Implementation constraint
+
+The sequel project should be implemented in **Python only**.
+
+Implications:
+- old R notebooks are reference material for methods and file provenance
+- new simulation, preprocessing, and comparison code should be written in Python
+- notation and method translation from the original R workflow must be made explicit to avoid silent inconsistencies
+
+## 11. Immediate reusable inputs
+
+From the previous project, the guide scripts already identify a likely first reusable input package for the spring prototype:
+- `springMeanSpeed.csv`
+- `chlSpring.csv`
+- `gdf_SS_10.csv`
+- `gdf_NS_10.csv`
+- `coefflist.csv`
+- `SScoordinates.csv`
+- `NScoordinates.csv`
+
+The first new prototype will probably only need a subset of these as active inputs, but they define the initial benchmark package.
+
+## 12. Immediate implementation plan
 
 ### Phase 1
 - recover and inspect the previous hexagon experiment
@@ -195,7 +217,7 @@ This separates biological mismatch from climate-driven model variability.
 - implement the exploratory Markov framework on the same hex graph
 - map accessible movement space under selected years and weight sets
 
-## 11. Open technical questions
+## 13. Open technical questions
 
 1. Which tern population should be used first?
 2. What is the fairest square-versus-hex comparison criterion?
@@ -205,7 +227,7 @@ This separates biological mismatch from climate-driven model variability.
 6. Should the Markov process allow staying in place?
 7. How broad should the Southern Ocean starting mask be in the first exploratory analysis?
 
-## 12. Immediate coding targets
+## 14. Immediate coding targets
 
 1. `src/notebooks/01_hex_grid_prototype.ipynb`
 2. `src/scripts/build_square_grid.py`

@@ -28,5 +28,6 @@
 
 12. How should the agreed prototype weight subset be implemented and labeled in code and notes?
 13. What fairness criterion should be hard-coded into the square-versus-hex benchmark design?
-14. Given that the first prototype will use the decadal mean setup from the present flyways paper, what exact files and processed surfaces should be reused first?
+14. For the Python-only sequel, how should the first reusable input package be copied or linked into the new project from the identified decadal-mean files?
 15. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?
+16. How should notation be standardized in Python so the old R coefficient ordering does not get confused with the later paper notation?
