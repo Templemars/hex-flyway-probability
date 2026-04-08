@@ -34,6 +34,26 @@ For flyway evaluation in the 2025 paper:
 
 This is important for the new project because it means any proposed secondary validation metric should not simply duplicate the same latitude-binned longitude comparison already embedded in the RMSE method.
 
+## Weighting strategy used in the 2025 paper
+
+The paper used a four-component linear cost formula:
+- `a` = standardised parallel wind cost
+- `b` = standardised crosswind cost
+- `c` = standardised distance cost
+- `d` = standardised food cost
+
+Key details:
+- the four weights sum to 1
+- weights were varied in increments of 0.1
+- `a` and `c` were allowed to vary between 0 and 1
+- `b` and `d` were allowed to vary between 0 and 0.5
+- these rules yielded 195 unique component combinations
+
+Important interpretation detail:
+- high values of crosswind and food weights were limited after sensitivity analysis because larger values often produced very long and unrealistic flyways while improving RMSE only marginally
+
+This matters for the new project because it suggests a practical precedent for starting with a constrained, interpretable coarse weight-set table rather than an unrestricted search.
+
 ## Follow-up
 
 This note is currently a seed note. It should later be expanded with:
