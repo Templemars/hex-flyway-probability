@@ -2,17 +2,52 @@
 
 ## 1. Overall framework
 
-We will represent the migration domain as a hexagonal graph:
-- nodes = hexagonal ocean cells
-- edges = adjacency between neighboring hexagons
+The project will be built around a graph representation of the migration domain.
 
-Each edge will carry environmental and geometric attributes that determine either:
-- a movement cost for least-cost path analysis
-- a movement probability for Markov propagation
+Two graph discretizations will be compared:
+- a square grid, to recreate the earlier framework as fairly as possible
+- a hexagonal grid, as the proposed methodological improvement
 
-## 2. Main components
+The main validated framework is Dijkstra least-cost path modelling with a predefined destination. A secondary exploratory framework will use Markov transitions on the same hex grid but without a predefined destination.
 
-### 2.1 Hexagonal grid
+## 2. Main analytical stages
+
+### Stage A, square-versus-hex benchmark
+- define a fair comparison between square and hex grids
+- use decadal mean seasonal environmental fields
+- simulate the same tern flyway on both grids
+- compare both against the decadal mean observed flyway
+
+### Stage B, interannual variability
+- run the hex-grid Dijkstra framework on yearly seasonal mean environmental fields
+- hold movement weights fixed
+- quantify annual deviations from the decadal mean flyway
+
+### Stage C, behavioural flexibility
+- repeat annual simulations across a coarse set of movement weight combinations
+- quantify how changing weight sets alters annual deviations from the decadal mean flyway
+- interpret this as a model-based proxy for required behavioural flexibility
+
+### Stage D, exploratory Markov analysis
+- initialize movement from a Southern Ocean mask
+- remove the destination constraint
+- propagate movement probabilities across the hex grid
+- map climatically accessible movement regions under different years and weight sets
+
+## 3. Grid design
+
+### 3.1 Square grid
+
+Purpose:
+- recreate the earlier modelling basis as a benchmark
+- provide a fair baseline for comparison with the hex grid
+
+Open design question:
+- what defines a fair comparison? Possible criteria include similar node count, similar characteristic cell spacing, or similar cell area.
+
+This fairness criterion must be decided explicitly before benchmarking.
+
+### 3.2 Hex grid
 
 Tasks:
 - define the spatial domain
@@ -26,102 +61,154 @@ Outputs:
 - hex cell geometry table
 - adjacency table or graph object
 
-### 2.2 Environmental annotation
+### 3.3 Optional geometry diagnostics
 
-Environmental variables to project onto the grid:
+Because one motivation for the hex grid is improved behaviour at high latitudes, we should consider simple geometric diagnostics in addition to predictive fit, for example:
+- neighbor-distance consistency
+- directional isotropy
+- area consistency with latitude
+
+These would support the square-versus-hex rationale independently of RMSE.
+
+## 4. Environmental annotation
+
+Environmental variables to project onto the grids:
 - wind support
 - crosswind
 - chlorophyll-a or food proxy
-- optional derived distance/progress metrics
+- distance-related movement term
 
-Questions to resolve:
-- are variables stored per cell, per season, per month, or per time step?
-- are edge values computed from source cell, target cell, or edge direction?
+Input structure:
+- decadal mean seasonal fields for the first benchmark
+- yearly seasonal mean fields for interannual analyses
 
-### 2.3 Edge scoring
+Immediate assumption:
+- each season is treated as climatically stationary over the migration period, based on seasonal-average fields
 
-Each move from cell i to neighboring cell j requires a score. A generic form is:
+## 5. Edge scoring and movement weights
 
-score(i,j) = f(wind support, crosswind, food, distance)
+Each move from cell i to neighboring cell j requires a score based on weighted movement drivers. A generic form is:
 
-Then:
-- Dijkstra cost can be defined as a monotonic inverse of desirability
-- Markov transition probability can be defined via normalization across neighbors
+score(i,j) = a * wind_support + b * crosswind_term + c * distance_term + d * food_term
 
-Possible probability form:
+where the coefficients represent relative movement priorities rather than direct observed behaviours.
+
+### 5.1 Dijkstra use
+- convert the score into a movement cost
+- compute least-cost paths from origin to destination
+
+### 5.2 Markov use
+- normalize neighbor scores into transition probabilities
+- propagate occupancy probability from the starting mask over repeated steps
+
+A softmax-like normalization remains a practical starting point:
 
 P(i -> j) = exp(beta * score(i,j)) / sum over neighbors exp(beta * score(i,k))
 
-This should be treated as an initial candidate, not a fixed final form.
+This is provisional and should be treated as an implementation starting point, not as a finalized model statement.
 
-### 2.4 Dijkstra mode
+## 6. Weight-set strategy
+
+To keep the first phase practical and interpretable, the project should begin with a coarse weight-set table rather than a dense parameter search.
+
+Suggested strategy:
+- test a manageable number of combinations first
+- include simple single-factor and two-factor combinations
+- include several combinations inspired by the earlier paper
+- refine only around promising combinations if needed
+
+Crosswind may be introduced in the first coarse set or added in a second round. This remains an open design choice.
+
+## 7. Dijkstra framework
 
 Purpose:
-- identify one or several optimal routes between origin and destination regions
-- compare with the previous least-cost framework
+- identify destination-constrained optimal flyways
+- compare square and hex frameworks
+- quantify interannual variability in optimal routes
+- test sensitivity to movement weights
 
 Outputs:
-- least-cost path geometry
+- path geometry
 - cumulative path cost
 - route summaries
+- annual deviations from the decadal mean flyway
 
-### 2.5 Markov mode
+## 8. Markov framework
 
 Purpose:
-- propagate occupancy probabilities over the graph across steps
-- estimate route corridors and spatial uncertainty
+- estimate destination-free climatically accessible movement space
+- explore how climate and weight sets shape broader migration envelopes
+- test sensitivity to starting location by varying the Southern Ocean start mask if needed
 
-Outputs:
-- occupancy distributions after each step
-- cumulative visitation probability
-- most likely corridors
+Current assumptions:
+- one step equals movement to a neighboring cell
+- no explicit destination
+- starting condition is a Southern Ocean non-breeding mask
+- movement environment is seasonally fixed during a run
 
-## 3. Validation framework
+Open question:
+- should remaining in the same cell be allowed as a transition?
+
+## 9. Validation framework
 
 Primary empirical material:
-- arctic tern tracking data from the previous project
+- decadal mean tern flyway from the earlier work
 
-Candidate validation products:
-- occupancy overlap maps
-- median track position versus simulated probability ridge
-- corridor width comparison
-- destination-region capture
-- path similarity relative to least-cost model
+Reference objects to distinguish:
+- **observed decadal mean flyway** as the biological benchmark
+- **simulated decadal mean flyway** as the model baseline under average climate
 
-## 4. Implementation plan
+Candidate metric structure:
+- primary metric: RMSE relative to the decadal mean flyway
+- secondary metric: at least one additional positional metric, such as median longitudinal deviation by latitude band
+- optional endpoint or destination-region metric
 
-### Stage 1
+For annual analyses, compare annual simulated flyways to:
+- the observed decadal mean flyway
+- the simulated decadal mean flyway
+
+This separates biological mismatch from climate-driven model variability.
+
+## 10. Immediate implementation plan
+
+### Phase 1
 - recover and inspect the previous hexagon experiment
-- build a clean prototype notebook or script for hex grid generation
-- test neighborhood graph correctness
+- choose the first tern population
+- define the fairness criterion for square-versus-hex comparison
 
-### Stage 2
-- define a toy transition score on a synthetic grid
-- run Dijkstra and Markov propagation on the same toy graph
-- visualize route versus occupancy field
+### Phase 2
+- build grid-generation scripts for square and hex domains
+- test neighborhood graphs and geometry diagnostics
+- create the first Dijkstra benchmark on decadal mean fields
 
-### Stage 3
-- import real tern-related environmental inputs
-- aggregate them to the hex grid
-- define seasonal or monthly transition layers
+### Phase 3
+- define the first coarse weight-set table
+- benchmark square versus hex against the decadal mean flyway
+- choose the best-performing or most interpretable weight sets
 
-### Stage 4
-- run validation against tern flyways
-- compare model hierarchy
+### Phase 4
+- run yearly seasonal simulations on the hex grid
+- quantify annual deviations and route stability
+- examine how weight changes alter stability
 
-## 5. Open technical questions
+### Phase 5
+- implement the exploratory Markov framework on the same hex graph
+- map accessible movement space under selected years and weight sets
 
-1. What should be the hex size?
-2. What should one step represent?
-3. Should movement allow only immediate neighbors, or also second-ring moves?
-4. Should destination attraction be explicit?
-5. How should seasonality enter the transition matrix?
-6. Is one transition matrix enough, or do we need time-varying matrices?
-7. Should path memory be absent, weak, or explicit?
+## 11. Open technical questions
 
-## 6. Immediate coding targets
+1. Which tern population should be used first?
+2. What is the fairest square-versus-hex comparison criterion?
+3. Which secondary metric should accompany RMSE?
+4. Should crosswind enter the first-pass coarse weight set or be added later?
+5. Should grid geometry be quantified explicitly in addition to predictive fit?
+6. Should the Markov process allow staying in place?
+7. How broad should the Southern Ocean starting mask be in the first exploratory analysis?
+
+## 12. Immediate coding targets
 
 1. `src/notebooks/01_hex_grid_prototype.ipynb`
-2. `src/scripts/build_hex_grid.py`
-3. `src/scripts/build_transition_matrix.py`
-4. `src/notebooks/02_toy_dijkstra_vs_markov.ipynb`
+2. `src/scripts/build_square_grid.py`
+3. `src/scripts/build_hex_grid.py`
+4. `src/scripts/build_dijkstra_inputs.py`
+5. `src/notebooks/02_square_vs_hex_benchmark.ipynb`

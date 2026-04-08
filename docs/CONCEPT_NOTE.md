@@ -2,84 +2,98 @@
 
 ## Tentative title
 
-From optimal flyways to probabilistic migration corridors: modelling seabird migration on a hexagonal ocean grid using least-cost paths and Markov chains
+Hexagonal-grid least-cost modelling of seabird flyways under climatic variability, with an exploratory extension to climatically accessible movement space
 
 ## Background
 
-Large-scale migratory flyways emerge from interactions between animal movement behaviour and the physical environment. In pelagic migrants, wind conditions, travel distance, and resource availability are likely central in shaping route selection. In the previous seabird-flyways project, these drivers were incorporated into a least-cost path framework and validated against arctic tern tracking data. That work demonstrated that combinations of wind support, crosswind, food availability, and distance can reproduce observed flyway patterns.
+Large-scale migratory flyways emerge from interactions between animal movement behaviour and the physical environment. In pelagic migrants, wind conditions, travel distance, and food availability are likely central in shaping route selection. In the previous seabird-flyways project, these drivers were incorporated into a least-cost path framework and validated against arctic tern tracking data. That work demonstrated that combinations of wind support, crosswind, food availability, and distance can reproduce observed flyway patterns.
 
-A remaining limitation of least-cost path approaches is that they typically emphasize a single optimal route or a small set of best routes. Real migrations, however, may be better represented as spatial probability fields or corridors, where some ocean regions are more likely to be traversed than others. This is particularly relevant when multiple environmentally favorable alternatives exist, when tracking data show corridor-like spread, or when route choice depends on cumulative local movement decisions rather than on a globally optimal path.
+A key limitation of the earlier framework is geometric: it was implemented on a square grid, which is not ideal for movement analysis over high-latitude oceanic domains. Square cells produce anisotropy and become increasingly awkward toward the poles. A hexagonal grid should provide a more isotropic movement representation and may therefore improve simulation of flyways that extend across polar and subpolar regions.
+
+A second limitation is climatic. If flyways are shaped by climate, then their stability should depend not only on average environmental conditions but also on interannual variability. If birds continue to use similar long-term flyways despite year-to-year climatic changes, then either the climate fields are stable enough or birds must be sufficiently flexible in how they weight different movement factors.
 
 ## Main idea
 
-We propose a graph-based framework on a hexagonal grid in which migratory movement is represented in two complementary ways:
+The main framework of this project is a destination-constrained least-cost path model implemented on a hexagonal graph. This framework will be validated against decadal mean tern flyways and directly compared against the earlier square-grid implementation.
 
-1. as a least-cost path problem, identifying optimal routes through the graph
-2. as a Markov movement process, estimating the probability distribution of bird locations after successive movement steps
+The project then extends this validated framework in two directions:
 
-In both cases, movement between neighboring hexagons will depend on environmental and geometric quantities such as wind, food availability, and distance. This makes it possible to directly compare deterministic optimal-route predictions with probabilistic migration-corridor predictions.
+1. **interannual variability**, by applying the same movement framework to yearly seasonal mean environmental fields
+2. **behavioural flexibility**, by asking how much movement weighting must change across years to maintain similar long-term flyways
 
-## Main hypothesis
+A secondary, exploratory extension will use a Markov movement process on the same hex grid, but without a predefined destination. This will allow us to map climatically accessible movement space and identify regions where migration is environmentally permissive even if no birds have yet been observed there.
 
-Observed tern flyways are better described as high-probability movement corridors shaped by local environmental decisions than as a single globally optimal path.
+## Main hypotheses
 
-## Supporting hypotheses
+1. A hexagonal-grid least-cost framework will simulate tern flyways more accurately than the earlier square-grid framework.
+2. Fixed movement priorities applied to yearly climate fields will produce measurable interannual variability in predicted flyways.
+3. Maintaining a stable long-term flyway under yearly climatic variability will require some degree of flexibility in the relative weighting of wind, food, distance, and possibly crosswind.
+4. Without a destination constraint, climate will still define structured regions of accessible movement, revealing a broader movement space than the realized flyway alone.
 
-1. A hex-grid least-cost model should recover broad features of the previously inferred flyways.
-2. A Markov-chain model should capture corridor width and alternative routes better than a pure least-cost model.
-3. Including food availability in addition to wind and distance should improve agreement with observed tern flyway distributions.
-4. The comparison between least-cost and Markov predictions can reveal whether different flyways are narrow optimal routes or broader probabilistic corridors.
+## Core scientific questions
 
-## Core modelling ingredients
+### Question 1, geometry and validation
+Does a hexagonal grid improve destination-constrained flyway simulation relative to the previous square-grid implementation?
 
-### State space
+### Question 2, interannual climatic variability
+How much year-to-year variation in predicted flyways emerges when environmental fields vary but the movement weighting remains fixed?
 
-The ocean is discretized into hexagonal grid cells. Each cell is a node in a graph, and neighboring hexagons define possible movement transitions.
+### Question 3, behavioural flexibility
+How much change in movement weighting is needed to keep predicted flyways close to the decadal mean flyway under varying yearly conditions?
 
-### Transition structure
+### Question 4, climatically accessible movement space
+What broader migration space becomes climatically accessible when birds are allowed to move without a predefined destination?
 
-At each step, a bird can move from one hexagon to one of its neighboring cells. The relative attractiveness of each move will be determined from a transition score based on:
-- wind support
-- crosswind or wind misalignment
-- distance or geometric displacement toward migration progress
-- food availability
+## Conceptual structure of the study
 
-These scores can be used in two ways:
-- converted into edge costs for Dijkstra
-- normalized into edge probabilities for a Markov process
+### Part I, main Dijkstra analysis
+The main analysis will use Dijkstra least-cost paths on both square and hexagonal grids. It will be based initially on decadal mean seasonal environmental fields and compared against the decadal mean observed tern flyway. This is the core, validated, publication-driving part of the project.
 
-### Outputs
+### Part II, annual variability
+The same hex-grid Dijkstra framework will then be run using seasonal averages from individual years. Annual flyways will be compared to the decadal mean flyway to estimate how strongly climate variability alone perturbs the route.
 
-The framework should produce:
-- least-cost routes
-- stepwise occupancy probability maps
-- high-probability corridors
-- summary statistics comparable to the observed flyway structure
+### Part III, behavioural flexibility
+A coarse set of movement weight combinations will be tested across years. The purpose is not to infer exact behaviour, but to quantify how much change in the relative weighting of movement cues would be needed to maintain a similar flyway under variable climate. This should be framed carefully as a model-based proxy for behavioural flexibility.
 
-## Validation idea
+### Part IV, exploratory Markov extension
+The Markov component is not the main validated framework and should not be presented as a direct replacement for Dijkstra. Instead, it serves a different purpose: starting from a Southern Ocean mask, it will estimate climatically accessible movement regions under different environmental weightings. This extension is exploratory and biogeographical, intended to show the broader space of environmentally permissive movement.
 
-The first validation target should be the same tern flyways used in the earlier project. This ensures continuity and allows a clean comparison with the prior least-cost path framework.
+## Validation and comparison logic
 
-Potential validation targets include:
-- overlap between observed tracks and predicted high-probability areas
-- similarity between observed and simulated median flyway positions
-- spread or corridor width of observed versus simulated movement
-- arrival-region accuracy
-- comparison of least-cost versus Markov prediction skill
+The first benchmark will be the decadal mean observed tern flyway from the earlier work. The first comparison will therefore be:
+- square-grid Dijkstra versus observed decadal mean flyway
+- hex-grid Dijkstra versus observed decadal mean flyway
+
+For yearly analyses, two reference objects should be distinguished:
+- the **observed decadal mean flyway**, which represents the biological benchmark
+- the **simulated decadal mean flyway**, which represents the model baseline under average climate
+
+This distinction allows us to separate biological mismatch from model-implied climatic variability.
+
+## Candidate metrics
+
+The primary metric will likely remain RMSE relative to the decadal mean flyway, to preserve continuity with the previous paper. However, RMSE alone is probably insufficient. At least one secondary positional metric should be included, for example:
+- median longitudinal deviation by latitude band
+- corridor or positional spread summary
+- destination-region error
+
+The exact choice remains open and should be decided before implementation.
 
 ## Why this could be publishable
 
-The publishable contribution is not only a new grid geometry. The real contribution is conceptual and methodological:
-- replacing or complementing single-route optimality with probabilistic movement landscapes
-- showing how local transition rules can generate emergent flyway corridors
-- comparing deterministic and probabilistic graph-based migration models on the same empirical system
+The project has several linked contributions:
+- a methodological comparison of square versus hexagonal movement grids
+- an improved least-cost path framework for tern flyway simulation
+- a climate-variability analysis of flyway stability
+- a model-based estimate of the flexibility required to preserve similar flyways across variable years
+- an exploratory map of broader climatically accessible movement space
 
-If successful, this could provide a more realistic framework for understanding flyway flexibility, uncertainty, and environmental sensitivity.
+Together, these elements support a biogeographical argument: climate does not only shape one realized flyway, but also structures the wider space of accessible migration pathways and constrains how stable realized flyways can remain through time.
 
 ## Immediate next scientific tasks
 
-1. Define what one Markov step means biologically and computationally.
-2. Decide whether the Markov model is memoryless or includes directional persistence.
-3. Define the baseline transition score mathematically.
-4. Specify the headline validation metric.
-5. Build a minimal hex-grid prototype before integrating the full environmental datasets.
+1. Choose the first tern population to analyze.
+2. Define a fair square-versus-hex comparison.
+3. Decide on the first metric set.
+4. Build the first coarse weight-set table.
+5. Reconstruct the hex-grid Dijkstra prototype before expanding the Markov framework.
