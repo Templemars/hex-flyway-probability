@@ -30,7 +30,7 @@ Choose an H3 resolution that is roughly comparable to the benchmark 1° global l
 
 ## Local geometry comparison
 
-![Square vs H3 local cells](../figures/04_square_vs_h3_local_cells.png)
+![Overlapping square vs H3 local cells](../figures/04_square_vs_h3_local_cells.png)
 
 ## Interpretation
 The benchmark target lies between H3 resolutions 3 and 4. Resolution 3 is the closest standard match in global-mean area terms, but it is still only an approximate comparison target rather than an exact equivalent of the 1° benchmark grid.
