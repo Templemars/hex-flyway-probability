@@ -23,6 +23,17 @@ The new project should clearly state what it inherits from this paper and what i
 - stronger focus on climate-driven flyway stability and interannual variability
 - exploratory Markov extension for climatically accessible movement space
 
+## Specific method detail to retain
+
+For flyway evaluation in the 2025 paper:
+- the median starting location of each population was used as the simulation starting point
+- the median longitudinal position of each population was calculated per 10° of latitude
+- each simulated flyway was also summarized as median longitude per 10° latitude band
+- RMSE was then calculated by comparing the simulated and observed longitude summaries across latitude bands
+- the top 20 simulations with the lowest RMSE were selected for further analysis
+
+This is important for the new project because it means any proposed secondary validation metric should not simply duplicate the same latitude-binned longitude comparison already embedded in the RMSE method.
+
 ## Follow-up
 
 This note is currently a seed note. It should later be expanded with:
