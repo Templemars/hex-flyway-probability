@@ -30,7 +30,7 @@ Audit values:
 - compute directional edge costs for parallel wind, crosswind, true distance, and food
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
-- for the two wind component maps, assume a bird flying in a straight southward direction everywhere
+- for the two wind component maps, assume a bird flying in a straight northward direction everywhere
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -49,8 +49,8 @@ Audit values:
   - `results/figures/11_raw_component_histograms.png`
   - `results/figures/11_standardized_component_histograms.png`
   - `results/figures/11_wind_vs_crosswind_scatter.png`
-  - `results/figures/11_map_parallel_wind_cost_southward.png`
-  - `results/figures/11_map_crosswind_cost_southward.png`
+  - `results/figures/11_map_parallel_wind_cost_northward.png`
+  - `results/figures/11_map_crosswind_cost_northward.png`
   - `results/figures/11_map_distance_cost.png`
   - `results/figures/11_map_food_cost.png`
 
@@ -62,9 +62,9 @@ Audit values:
 
 ![Wind vs crosswind standardized costs](../figures/11_wind_vs_crosswind_scatter.png)
 
-![Parallel wind cost map](../figures/11_map_parallel_wind_cost_southward.png)
+![Parallel wind cost map](../figures/11_map_parallel_wind_cost_northward.png)
 
-![Crosswind cost map](../figures/11_map_crosswind_cost_southward.png)
+![Crosswind cost map](../figures/11_map_crosswind_cost_northward.png)
 
 ![Distance cost map](../figures/11_map_distance_cost.png)
 
@@ -77,7 +77,7 @@ The four maps are also useful because they separate two different views of the m
 - edge-level directional costs used in the real path calculations
 - cell-level component surfaces used for intuitive inspection
 
-For the wind maps, the southward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
+For the wind maps, the northward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
 
 ## Points to watch
 - the distance component now represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term

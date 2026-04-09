@@ -41,8 +41,8 @@ REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "11_compute-h3-cost-compone
 RAW_HIST_PATH = PROJECT_ROOT / "results" / "figures" / "11_raw_component_histograms.png"
 STD_HIST_PATH = PROJECT_ROOT / "results" / "figures" / "11_standardized_component_histograms.png"
 SCATTER_PATH = PROJECT_ROOT / "results" / "figures" / "11_wind_vs_crosswind_scatter.png"
-MAP_WIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_parallel_wind_cost_southward.png"
-MAP_CROSSWIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_crosswind_cost_southward.png"
+MAP_WIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_parallel_wind_cost_northward.png"
+MAP_CROSSWIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_crosswind_cost_northward.png"
 MAP_DISTANCE_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_distance_cost.png"
 MAP_FOOD_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_food_cost.png"
 
@@ -179,22 +179,22 @@ def main() -> None:
     fig.savefig(SCATTER_PATH, dpi=150)
     plt.close(fig)
 
-    # Component maps at cell level. For wind maps, use a straight southward heading.
-    southward_support = -env["v10"]
-    southward_parallel_raw = np.abs(southward_support - percentile_99(southward_support))
-    southward_crosswind_raw = np.abs(env["u10"])
+    # Component maps at cell level. For wind maps, use a straight northward heading.
+    northward_support = env["v10"]
+    northward_parallel_raw = np.abs(northward_support - percentile_99(northward_support))
+    northward_crosswind_raw = np.abs(env["u10"])
     env_map = env[["h3_cell", "lon", "lat", "u10", "v10", "chlor_a"]].copy()
-    env_map["parallel_wind_cost_southward_raw"] = southward_parallel_raw
-    env_map["crosswind_cost_southward_raw"] = southward_crosswind_raw
+    env_map["parallel_wind_cost_northward_raw"] = northward_parallel_raw
+    env_map["crosswind_cost_northward_raw"] = northward_crosswind_raw
     env_map["distance_cost_raw"] = out.groupby("source_h3", as_index=False)["distance_cost_raw"].mean()["distance_cost_raw"]
     env_map["food_cost_raw"] = compute_food_cost(env_map["chlor_a"])
-    env_map["parallel_wind_cost_southward_std"] = standardize_to_100(env_map["parallel_wind_cost_southward_raw"])
-    env_map["crosswind_cost_southward_std"] = standardize_to_100(env_map["crosswind_cost_southward_raw"])
+    env_map["parallel_wind_cost_northward_std"] = standardize_to_100(env_map["parallel_wind_cost_northward_raw"])
+    env_map["crosswind_cost_northward_std"] = standardize_to_100(env_map["crosswind_cost_northward_raw"])
     env_map["distance_cost_std"] = standardize_to_100(env_map["distance_cost_raw"])
     env_map["food_cost_std"] = standardize_to_100(env_map["food_cost_raw"])
 
-    draw_component_map(env_map, "parallel_wind_cost_southward_std", MAP_WIND_PATH, "Parallel wind cost surface for straight southward flight")
-    draw_component_map(env_map, "crosswind_cost_southward_std", MAP_CROSSWIND_PATH, "Crosswind cost surface for straight southward flight")
+    draw_component_map(env_map, "parallel_wind_cost_northward_std", MAP_WIND_PATH, "Parallel wind cost surface for straight northward flight")
+    draw_component_map(env_map, "crosswind_cost_northward_std", MAP_CROSSWIND_PATH, "Crosswind cost surface for straight northward flight")
     draw_component_map(env_map, "distance_cost_std", MAP_DISTANCE_PATH, "Distance cost surface (mean outgoing H3 edge distance)")
     draw_component_map(env_map, "food_cost_std", MAP_FOOD_PATH, "Food cost surface from chlorophyll-a")
 
@@ -233,7 +233,7 @@ Audit values:
 - compute directional edge costs for parallel wind, crosswind, true distance, and food
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
-- for the two wind component maps, assume a bird flying in a straight southward direction everywhere
+- for the two wind component maps, assume a bird flying in a straight northward direction everywhere
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -252,8 +252,8 @@ Audit values:
   - `results/figures/11_raw_component_histograms.png`
   - `results/figures/11_standardized_component_histograms.png`
   - `results/figures/11_wind_vs_crosswind_scatter.png`
-  - `results/figures/11_map_parallel_wind_cost_southward.png`
-  - `results/figures/11_map_crosswind_cost_southward.png`
+  - `results/figures/11_map_parallel_wind_cost_northward.png`
+  - `results/figures/11_map_crosswind_cost_northward.png`
   - `results/figures/11_map_distance_cost.png`
   - `results/figures/11_map_food_cost.png`
 
@@ -265,9 +265,9 @@ Audit values:
 
 ![Wind vs crosswind standardized costs](../figures/11_wind_vs_crosswind_scatter.png)
 
-![Parallel wind cost map](../figures/11_map_parallel_wind_cost_southward.png)
+![Parallel wind cost map](../figures/11_map_parallel_wind_cost_northward.png)
 
-![Crosswind cost map](../figures/11_map_crosswind_cost_southward.png)
+![Crosswind cost map](../figures/11_map_crosswind_cost_northward.png)
 
 ![Distance cost map](../figures/11_map_distance_cost.png)
 
@@ -280,7 +280,7 @@ The four maps are also useful because they separate two different views of the m
 - edge-level directional costs used in the real path calculations
 - cell-level component surfaces used for intuitive inspection
 
-For the wind maps, the southward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
+For the wind maps, the northward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
 
 ## Points to watch
 - the distance component now represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
