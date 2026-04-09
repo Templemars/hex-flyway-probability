@@ -14,12 +14,13 @@ Design principles
 - minimal dependencies
 - easy to read, inspect, and modify
 - reproducible file-in / file-out behavior
+- pandas for CSV/tabular handling
 
 Current scope
 -------------
-1. Read the copied benchmark CSV files
+1. Read the copied benchmark CSV files with pandas
 2. Drop the extra export index column if present
-3. Standardize column names
+3. Standardize column names conservatively
 4. Write cleaned CSVs to data/processed/benchmark_tables/
 5. Print a short summary so the user can inspect what happened
 
@@ -32,9 +33,10 @@ This script is intentionally narrow. It does not yet:
 
 from __future__ import annotations
 
-import csv
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict
+
+import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -42,83 +44,47 @@ RAW_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
 OUT_DIR = PROJECT_ROOT / "data" / "processed" / "benchmark_tables"
 
 
-# Mapping from raw file names to cleaned output names.
 INPUT_OUTPUT_MAP: Dict[str, str] = {
     "springMeanSpeed.csv": "spring_wind_clean.csv",
     "chlSpring.csv": "spring_chla_clean.csv",
 }
 
 
-def read_csv_rows(path: Path) -> List[List[str]]:
-    """Read a CSV file into a list of rows.
-
-    We keep the implementation deliberately simple here because the goal is
-    transparency and easy debugging, not high-performance I/O.
-    """
-    with path.open("r", newline="") as handle:
-        reader = csv.reader(handle)
-        return list(reader)
+def read_csv_table(path: Path) -> pd.DataFrame:
+    """Read a raw benchmark CSV using pandas."""
+    return pd.read_csv(path)
 
 
-def drop_export_index_column(rows: List[List[str]]) -> List[List[str]]:
+def drop_export_index_column(df: pd.DataFrame) -> pd.DataFrame:
     """Drop the leading export index column if it is present.
 
-    In the copied benchmark files, the first header cell is empty, which signals
-    that a dataframe index was written out during CSV export. We remove that
-    column so the cleaned tables contain only meaningful scientific fields.
+    In the copied benchmark files, pandas reads the unnamed export index as an
+    `Unnamed: 0` column. We remove it so the cleaned tables contain only
+    meaningful scientific fields.
     """
-    if not rows:
-        return rows
-
-    header = rows[0]
-    if len(header) > 0 and header[0] == "":
-        return [row[1:] for row in rows]
-
-    return rows
+    columns_to_drop = [col for col in df.columns if str(col).startswith("Unnamed:")]
+    if columns_to_drop:
+        return df.drop(columns=columns_to_drop)
+    return df
 
 
-def standardize_header(header: List[str]) -> List[str]:
-    """Standardize header names very conservatively.
-
-    We only strip whitespace here. We do not aggressively rename columns yet,
-    because preserving recognizability from the original files is useful.
-    """
-    return [col.strip() for col in header]
+def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Standardize column names very conservatively."""
+    df = df.copy()
+    df.columns = [str(col).strip() for col in df.columns]
+    return df
 
 
-def clean_rows(rows: List[List[str]]) -> List[List[str]]:
-    """Apply the full cleaning pipeline to CSV rows."""
-    rows = drop_export_index_column(rows)
-
-    if not rows:
-        return rows
-
-    header = standardize_header(rows[0])
-    data_rows = rows[1:]
-
-    # Keep only rows with the same number of columns as the header.
-    # This is a simple guard against malformed lines.
-    clean_data_rows = [row for row in data_rows if len(row) == len(header)]
-
-    return [header] + clean_data_rows
+def clean_table(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply the full cleaning pipeline to a benchmark table."""
+    df = drop_export_index_column(df)
+    df = standardize_columns(df)
+    return df
 
 
-def write_csv_rows(path: Path, rows: List[List[str]]) -> None:
-    """Write rows to a CSV file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerows(rows)
-
-
-def summarize_rows(rows: List[List[str]]) -> str:
-    """Return a short human-readable summary of the cleaned table."""
-    if not rows:
-        return "empty table"
-
-    header = rows[0]
-    n_rows = max(0, len(rows) - 1)
-    return f"rows={n_rows}, columns={len(header)}, fields={header}"
+def summarize_table(df: pd.DataFrame) -> str:
+    """Return a short human-readable summary of a cleaned table."""
+    return f"rows={len(df)}, columns={len(df.columns)}, fields={list(df.columns)}"
 
 
 def main() -> None:
@@ -133,12 +99,12 @@ def main() -> None:
         input_path = RAW_DIR / input_name
         output_path = OUT_DIR / output_name
 
-        rows = read_csv_rows(input_path)
-        clean = clean_rows(rows)
-        write_csv_rows(output_path, clean)
+        df = read_csv_table(input_path)
+        clean = clean_table(df)
+        clean.to_csv(output_path, index=False)
 
         print(f"Processed {input_name} -> {output_name}")
-        print(f"  {summarize_rows(clean)}")
+        print(f"  {summarize_table(clean)}")
         print()
 
     print("Done.")
