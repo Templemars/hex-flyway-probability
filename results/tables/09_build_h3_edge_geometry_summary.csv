@@ -1,0 +1,2 @@
+rows,unique_source_cells,unique_target_cells,mean_edges_per_source,distance_min_km,distance_mean_km,distance_max_km,bearing_min_deg,bearing_max_deg
+221150,38849,38849,5.692553218873073,86.33526984855045,120.23094979543463,131.3784999251784,0.0450656354664715,359.9681817754318
