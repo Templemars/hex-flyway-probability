@@ -93,6 +93,29 @@ Input structure:
 Immediate assumption:
 - each season is treated as climatically stationary over the migration period, based on seasonal-average fields
 
+## 4.1 Environmental transfer from the benchmark grid to H3
+
+The benchmark environmental package is currently represented as a 1° global lat-lon support.
+For the first H3 prototype, environmental values should be transferred to the H3 grid using a simple and explicit sampling rule.
+
+Chosen first implementation:
+- compute the centroid of each H3 cell
+- sample the benchmark environmental field at that centroid
+- use nearest-neighbor assignment as the first method
+
+Reason for this choice:
+- point-to-cell aggregation from the square support can leave some H3 cells empty if no benchmark centroids fall inside them
+- centroid sampling gives each H3 cell a complete environmental record
+- this is simpler and less ad hoc than aggregation-plus-gap-filling for the first prototype
+
+Wind handling rule:
+- treat `u10` and `v10` as the primary wind fields
+- do not use raw wind direction as a directly averaged field in the first implementation
+- recompute direction or derived wind quantities later if needed
+
+This first centroid-sampling method is a prototype choice, not a claim of exact conservative remapping.
+A more rigorous transfer method can be added later if needed.
+
 ## 5. Edge scoring and movement weights
 
 Each move from cell i to neighboring cell j requires a score based on weighted movement drivers. A generic form is:
