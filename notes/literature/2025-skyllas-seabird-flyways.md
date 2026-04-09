@@ -8,6 +8,9 @@ Skyllas, N. et al. (2025). *Simulating and Analysing Seabird Flyways: An Approac
 
 This is the direct scientific predecessor of the current project. It defines the previous square-grid least-cost framework, the relevant environmental trade-offs, the tern flyway validation context, and the broad scientific motivation for the sequel project.
 
+A machine-converted working-text copy has also been created for search and method lookup:
+- `refs/working-text/2025-skyllas-seabird-flyways-working-copy.md`
+
 ## Role in the new project
 
 This paper serves as:
