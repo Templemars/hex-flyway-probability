@@ -2,24 +2,19 @@
 
 ## Immediate technical next steps
 
-1. How should the first H3 edge-geometry script be structured so it exposes source, target, bearing, and true edge distance transparently?
-2. What is the cleanest first formulation of movement cost on the H3 grid using the agreed coefficient ordering:
-   - `a = wind`
-   - `b = crosswind`
-   - `c = distance`
-   - `d = food`
-3. What should the first H3 cost-construction script output as tables, figures, and report summaries?
+1. Which first prototype coefficient sets should we test on the standardized H3 component table before the first Dijkstra runs?
+2. Should the first Dijkstra demonstration focus only on Svalbard spring, or should Netherlands spring be prepared in parallel for immediate comparison?
+3. What should the first Dijkstra step output as tables, figures, and report summaries so the route behavior is easy to inspect?
 
 ## Scientific design checks
 
-4. Is the current H3 environmental assignment method sufficient for the first prototype, or do we already see a reason to upgrade beyond nearest-neighbor centroid sampling?
-5. At what point should we switch from geometry/environment preparation into the first Dijkstra path calculation for Svalbard spring?
-6. Which benchmark-only artifacts should remain reference-only, and which should become active comparison targets in the next phase?
+4. Is the current H3 environmental assignment method still sufficient for the first routing prototype, or do the new component maps suggest any need for refinement?
+5. How should we interpret the diagnostic northward component maps versus the true edge-based routing quantities when presenting the method?
+6. How should we handle large processed files in the repo if edge-level tables continue to grow beyond comfortable normal-git size?
 
 ## Literature / framing
 
-7. Which additional 5 to 10 papers should enter the first literature batch next?
-8. Which of those papers are core, methods, or background?
+7. Which literature notes should be revisited next only if they directly affect the first Dijkstra formulation or interpretation?
 
 ## Process reminder
 
