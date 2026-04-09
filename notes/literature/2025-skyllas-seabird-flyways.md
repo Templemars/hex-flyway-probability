@@ -83,10 +83,35 @@ Component-specific logic retained from the methods section:
 - **distance cost** in the 2025 paper was intentionally simple: it was a constant per-step penalty equal to the median (`P50`) of the standardised parallel wind cost surface, so longer routes accumulated more cost simply by requiring more grid-cell steps
 - **food cost** is based on chlorophyll-a, treated as a food proxy and transformed into a standardized cost contribution
 
+Exact standardization logic from the 2025 paper:
+- **parallel wind cost**
+  - compute `windsupport(i,j) = |w|_i * cos(theta_ij)`
+  - compute `parallel wind cost(i,j) = |windsupport(i,j) - P99(windsupport)|`
+  - standardize as:
+    - `w_cost(i,j) = 100 * parallel wind cost(i,j) / P99(parallel wind cost)`
+- **crosswind cost**
+  - compute `crosswind cost(i,j) = |w|_i * sin(theta_ij)`
+  - standardize as:
+    - `c_cost(i,j) = 100 * crosswind cost(i,j) / P99(crosswind cost)`
+- **distance cost**
+  - define a constant cost equal to `P50(w_cost)`
+  - this is already in standardized cost units conceptually because it is derived from the standardised parallel wind cost surface
+- **food cost**
+  - compute `food cost(i,j) = | log(chla_i) + 1 |`
+  - before this, transformed values greater than `-1` were replaced by `-1`, so all `chla > 0.1 mg/m^3` became maximally productive cells
+  - standardize as:
+    - `f_cost(i,j) = 100 * food cost(i,j) / P99(food cost)`
+
+Interpretation of the old standardization scheme:
+- the 2025 paper standardized major components using a **P99-based scale to 0-100 SCU** (Standardised Cost Units)
+- this reduces the influence of extreme outliers compared with a max-based scaling
+- parallel wind, crosswind, and food were all put onto a comparable 0 to 100 cost-like scale before weighting
+
 Important implication for the sequel:
 - the old distance term was not a destination-distance heuristic or a spatially varying distance-to-goal surface
 - it was a **uniform per-step path-length penalty**, meaning route length was penalized through cumulative step count
 - when translating the model to H3, we need to decide whether to preserve this exact logic conceptually (constant step penalty) or adapt it carefully to the new grid geometry (for example using actual neighbor-edge distance while keeping the same conceptual role)
+- the P99-based standardization logic is a strong candidate to preserve in the sequel, because it is transparent, robust to outliers, and already part of the published model lineage
 
 Important implementation caution for the sequel:
 - because the sequel uses H3 and Python rather than the original square-grid / R workflow, the paper's conceptual logic should be preserved even if the exact numerical implementation details need adaptation
