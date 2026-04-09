@@ -31,7 +31,7 @@ How different are the square and H3 benchmark grids at a basic geometric level?
 
 ![Area comparison by latitude](../figures/06_compare_square_h3_area_by_latitude.png)
 
-![Local overlapping grid comparison](../figures/06_compare_square_h3_local_overlap.png)
+![Local overlapping grid comparison using a contiguous H3 neighborhood](../figures/06_compare_square_h3_local_overlap.png)
 
 ## Interpretation
 The two benchmark grids are comparable only in a rough sense. The square-grid cell area varies strongly with latitude, whereas the H3 grid uses cells with a much more stable characteristic area. This confirms that the square-versus-H3 comparison is inherently approximate, but still scientifically useful as a controlled geometric comparison.
