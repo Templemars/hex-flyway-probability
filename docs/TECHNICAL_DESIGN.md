@@ -113,6 +113,10 @@ Wind handling rule:
 - do not use raw wind direction as a directly averaged field in the first implementation
 - recompute direction or derived wind quantities later if needed
 
+Food handling rule:
+- for continuity with the 2025 paper, do not use raw chlorophyll directly in the food-cost term
+- preserve the published chlorophyll treatment based on the log-transformed food-cost logic and the high-productivity cap
+
 This first centroid-sampling method is a prototype choice, not a claim of exact conservative remapping.
 A more rigorous transfer method can be added later if needed.
 
