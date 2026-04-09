@@ -117,6 +117,13 @@ Food handling rule:
 - for continuity with the 2025 paper, do not use raw chlorophyll directly in the food-cost term
 - preserve the published chlorophyll treatment based on the log-transformed food-cost logic and the high-productivity cap
 
+Edge-environment policy:
+- the first implementation should be treated as **source-based** for movement components
+- source wind variables (`u10`, `v10`, `speed`) are the required wind inputs for directional movement calculations
+- source chlorophyll is the required food input for the first published-method implementation
+- target chlorophyll may be retained in the enriched edge table as an explicit diagnostic or future-variant field, but it is not required by the first implementation
+- target wind is not needed for the first implementation
+
 This first centroid-sampling method is a prototype choice, not a claim of exact conservative remapping.
 A more rigorous transfer method can be added later if needed.
 
