@@ -36,7 +36,7 @@ What does the directed neighbor-edge geometry of the H3 grid look like before en
 
 ![Edge bearing histogram](../figures/09_h3_edge_bearing_hist.png)
 
-![Local H3 edge example](../figures/09_h3_edge_local_example.png)
+![Local H3 edge example with cell boundaries](../figures/09_h3_edge_local_example.png)
 
 ## Interpretation
 This step creates the first truly graph-based object in the sequel: a directed H3 edge table with explicit geometry. That is the right foundation for rebuilding the old directional movement logic transparently in Python. The next step can now attach wind and food information to each directed edge and begin constructing the cost components themselves.
