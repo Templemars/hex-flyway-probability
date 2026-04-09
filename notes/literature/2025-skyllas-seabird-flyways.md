@@ -54,6 +54,39 @@ Important interpretation detail:
 
 This matters for the new project because it suggests a practical precedent for starting with a constrained, interpretable coarse weight-set table rather than an unrestricted search.
 
+## Cost-construction logic to retain for the sequel
+
+The 2025 paper's movement model is built from **directional edge costs** rather than a simple static cell-level resistance surface.
+
+The key logic is:
+- each move is defined from a **source cell `i`** to a **target cell `j`**
+- the relevant environmental and geometric quantities are computed for that directional move
+- the final movement cost is then a **linear weighted combination** of four standardized components
+
+Component structure in the paper's final notation:
+- `w_cost` = standardised parallel wind cost
+- `c_cost` = standardised crosswind cost
+- `d_cost` = standardised distance cost
+- `f_cost` = standardised food cost
+
+Final cost formula used in the paper:
+- `cost(i,j) = a * w_cost(i,j) + b * c_cost(i,j) + c * d_cost(i,j) + d * f_cost(i,j)`
+
+Important implications:
+- the model is **direction-sensitive**, because wind support and crosswind depend on the direction of movement from `i` to `j`
+- this means the sequel should be built as an **edge-based graph model**, not only as a cell-based raster-like resistance layer
+- the paper explicitly avoided assuming non-linear relationships between components in the final combined cost formula; the final combination is linear for interpretability
+
+Component-specific logic retained from the methods section:
+- **parallel wind cost** is based on the projection of the wind vector onto the direction of movement
+- **crosswind cost** is based on the component of the wind vector perpendicular to movement direction
+- **distance cost** is based on the distance from the target cell to the destination, standardized within the domain
+- **food cost** is based on chlorophyll-a, treated as a food proxy and transformed into a standardized cost contribution
+
+Important implementation caution for the sequel:
+- because the sequel uses H3 and Python rather than the original square-grid / R workflow, the paper's conceptual logic should be preserved even if the exact numerical implementation details need adaptation
+- before coding the full H3 cost graph, the local edge-level environmental quantities should be computed and inspected explicitly
+
 ## Follow-up
 
 This note is currently a seed note. It should later be expanded with:
