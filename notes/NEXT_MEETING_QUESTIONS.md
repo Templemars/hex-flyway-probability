@@ -2,7 +2,7 @@
 
 ## Immediate technical next steps
 
-1. How should the square-grid and H3-grid environmental fields be compared directly now that both supports and the first H3 environmental assignment exist?
+1. How should the first H3 edge-geometry script be structured so it exposes source, target, bearing, and true edge distance transparently?
 2. What is the cleanest first formulation of movement cost on the H3 grid using the agreed coefficient ordering:
    - `a = wind`
    - `b = crosswind`

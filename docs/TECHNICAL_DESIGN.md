@@ -116,6 +116,21 @@ Wind handling rule:
 This first centroid-sampling method is a prototype choice, not a claim of exact conservative remapping.
 A more rigorous transfer method can be added later if needed.
 
+## 4.2 Standardization and distance-term policy
+
+For continuity with the 2025 paper, the sequel should preserve the published **P99-based component standardization philosophy** wherever possible.
+
+Working decision:
+- standardize the major varying components onto comparable cost units using a P99-based scaling rule
+- keep this explicit in Python rather than hiding it inside package logic
+
+Distance-term refinement:
+- the 2025 paper used a constant per-step distance penalty derived from `P50(w_cost)`
+- the H3 sequel should instead use **true H3 edge distance** as the distance component
+- this should be described explicitly as an intentional methodological refinement enabled by the graph-based H3 representation
+
+This means the sequel preserves the old scaling philosophy but improves the geometric treatment of distance.
+
 ## 5. Edge scoring and movement weights
 
 Each move from cell i to neighboring cell j requires a score based on weighted movement drivers. A generic form is:
