@@ -80,8 +80,13 @@ Important implications:
 Component-specific logic retained from the methods section:
 - **parallel wind cost** is based on the projection of the wind vector onto the direction of movement
 - **crosswind cost** is based on the component of the wind vector perpendicular to movement direction
-- **distance cost** is based on the distance from the target cell to the destination, standardized within the domain
+- **distance cost** in the 2025 paper was intentionally simple: it was a constant per-step penalty equal to the median (`P50`) of the standardised parallel wind cost surface, so longer routes accumulated more cost simply by requiring more grid-cell steps
 - **food cost** is based on chlorophyll-a, treated as a food proxy and transformed into a standardized cost contribution
+
+Important implication for the sequel:
+- the old distance term was not a destination-distance heuristic or a spatially varying distance-to-goal surface
+- it was a **uniform per-step path-length penalty**, meaning route length was penalized through cumulative step count
+- when translating the model to H3, we need to decide whether to preserve this exact logic conceptually (constant step penalty) or adapt it carefully to the new grid geometry (for example using actual neighbor-edge distance while keeping the same conceptual role)
 
 Important implementation caution for the sequel:
 - because the sequel uses H3 and Python rather than the original square-grid / R workflow, the paper's conceptual logic should be preserved even if the exact numerical implementation details need adaptation
