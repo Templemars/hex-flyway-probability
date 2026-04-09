@@ -4,8 +4,9 @@
 
 `rWind` is an R package for direction-dependent wind/current connectivity analysis. It supports workflows in which environmental vector fields are turned into directional transition structures and then used for least-cost path analysis.
 
-Repository:
-- `https://github.com/jabiologo/rWind`
+Core references now stored in the project:
+- repository: `https://github.com/jabiologo/rWind`
+- paper: `refs/methods/rwind-2019-ecography.pdf`
 
 ## Why it matters for this project
 
@@ -55,6 +56,26 @@ The rWind lineage supports the decision that the heart of the new model should b
 - grid structure (H3 instead of square raster)
 - software stack (Python instead of R)
 - broader project framing (interannual variability, behavioural flexibility, exploratory Markov extension)
+
+## Additional details from the 2019 Ecography software note
+
+The paper makes several points that are directly relevant to the sequel design:
+- standard connectivity tools based on friction layers are not naturally suited to wind because wind connectivity depends on both speed and direction
+- wind connectivity is directional and target-dependent: it depends on wind at the source cell and the position of the target cell
+- the default `rWind` movement-cost algorithm is explicitly anisotropic and computes cost from three ingredients:
+  - wind speed at the starting cell
+  - wind direction (azimuth) at the starting cell
+  - the position of the target cell
+- `rWind` can output either:
+  - a sparse transition-cost matrix
+  - or a conductance `TransitionLayer` for `gdistance`
+
+Important algorithmic detail from the paper:
+- the default cost formula is based on a **horizontal factor (HF)** and wind speed `S`
+- active movement uses:
+  - `Cost = HF / S`
+- where `HF` depends on the horizontal relative moving angle (HRMA), i.e. the angle between wind azimuth and movement direction
+- this again reinforces that the core object is a **directional source-to-target transition cost**, not a simple static resistance surface
 
 ## Follow-up
 
