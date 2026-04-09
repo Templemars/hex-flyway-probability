@@ -1,34 +1,27 @@
 # Questions for next brainstorming session
 
-## Priority restart points
+## Immediate technical next steps
 
-1. Which tern population / flyway should be used first?
-2. What is the fairest way to compare square and hex grids?
-3. Which genuinely non-redundant secondary metric should accompany RMSE, given that the 2025 paper's RMSE already used median longitude per 10° latitude band?
-4. Should crosswind be included in the first coarse weight-set table or added later?
-5. Should grid geometry and polar distortion be quantified explicitly, in addition to predictive fit?
+1. How should the square-grid and H3-grid environmental fields be compared directly now that both supports and the first H3 environmental assignment exist?
+2. What is the cleanest first formulation of movement cost on the H3 grid using the agreed coefficient ordering:
+   - `a = wind`
+   - `b = crosswind`
+   - `c = distance`
+   - `d = food`
+3. What should the first H3 cost-construction script output as tables, figures, and report summaries?
 
-## Scientific framing checks
+## Scientific design checks
 
-6. Is the project scope still appropriate for one paper?
-7. How should behavioural flexibility be phrased so we do not overinterpret model weights as directly observed behaviour?
-8. How should the Markov section be framed so it remains clearly exploratory and biogeographical rather than competing with the main Dijkstra analysis?
+4. Is the current H3 environmental assignment method sufficient for the first prototype, or do we already see a reason to upgrade beyond nearest-neighbor centroid sampling?
+5. At what point should we switch from geometry/environment preparation into the first Dijkstra path calculation for Svalbard spring?
+6. Which benchmark-only artifacts should remain reference-only, and which should become active comparison targets in the next phase?
 
-## Markov-specific questions
+## Literature / framing
 
-9. Should the Markov process allow staying in place?
-10. How broad should the Southern Ocean starting mask be in the first analysis?
-11. Which Markov outputs should be prioritized for the paper:
-   - occupancy after N steps
-   - cumulative visitation probability
-   - contour envelopes
-   - overlap with observed flyways
+7. Which additional 5 to 10 papers should enter the first literature batch next?
+8. Which of those papers are core, methods, or background?
 
-## Practical next design choices
+## Process reminder
 
-12. How should the agreed prototype weight subset be implemented and labeled in code and notes?
-13. How should H3 resolution 3 be justified clearly in the methods as the closest global-mean benchmark match rather than an exact equivalent?
-14. How should nearest-neighbor centroid sampling from the 1° benchmark field to H3 cells be implemented most transparently in Python?
-15. How should the reporting template be implemented consistently across scripts, especially the first grid-building and comparison scripts?
-16. Which additional 5 to 10 papers should enter the first literature batch, and how should they be categorized into core, methods, and background?
-17. How should old R-generated benchmark files be translated and labeled so their coefficient ordering is never confused with the new Python convention?
+This file is a rolling current agenda only.
+Resolved or stale items should be removed rather than accumulated.
