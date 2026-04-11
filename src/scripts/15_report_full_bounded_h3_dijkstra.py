@@ -68,9 +68,11 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
     ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.5, linewidths=0)
-    mesh = ax.pcolormesh(xedges, yedges, heatmap, cmap="magma", shading="auto")
+    positive_heat = heatmap[heatmap > 0]
+    vmax = float(np.percentile(positive_heat, 99)) if positive_heat.size else 1.0
+    mesh = ax.pcolormesh(xedges, yedges, heatmap, cmap="magma", shading="auto", vmin=0.0, vmax=vmax)
     cbar = fig.colorbar(mesh, ax=ax)
-    cbar.set_label("Route-point density per 2° bin")
+    cbar.set_label(f"Route-point density per 2° bin, capped at P99 = {vmax:.1f}")
     ax.set_title("Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap")
     ax.set_xlabel("Longitude (degrees)")
     ax.set_ylabel("Latitude (degrees)")
