@@ -21,25 +21,27 @@ This matches the benchmark-comparison logic much more closely than ranking by in
 ## Outputs
 - RMSE table: `results/tables/16_svalbard_full_bounded_rmse.csv`
 - per-band route summaries: `results/tables/16_svalbard_full_bounded_route_band_summaries.csv`
-- top-route map: `results/figures/16_svalbard_top_rmse_routes.png`
-- coefficient boxplots for top 20 RMSE behaviors: `results/figures/16_svalbard_top_rmse_coefficient_boxplots.png`
+- top-20 route map: `results/figures/16_svalbard_top20_rmse_routes.png`
+- coefficient boxplots comparing new top 20 routes against the old paper behavior set: `results/figures/16_svalbard_top_rmse_coefficient_boxplots.png`
 
 ## Quick-look figures
 
-![Top RMSE routes versus benchmark](../figures/16_svalbard_top_rmse_routes.png)
+![Top 20 RMSE LCPs versus benchmark](../figures/16_svalbard_top20_rmse_routes.png)
 
 ![Coefficient boxplots among top 20 RMSE behaviors](../figures/16_svalbard_top_rmse_coefficient_boxplots.png)
 
 ## Main result
-- lowest-RMSE behavior: **behavior_208**
-- lowest RMSE: **7.140 longitude degrees**
+- lowest-RMSE behavior: **behavior_209**
+- lowest RMSE: **508.9 km**
 - compared latitude bands: **15**
-- weights: **(0.8, 0.0, 0.1, 0.1)**
+- weights: **(0.8, 0.0, 0.2, 0.0)**
 
 ## Interpretation
 This is the first ranking step that directly addresses the real scientific goal of the Svalbard spring prototype: which simulated least-cost paths best recreate the observed 10-degree mean flyway.
 
 That makes this step much more meaningful than any earlier ranking by internal path cost. The RMSE table now provides the correct candidate ordering for further inspection.
+
+Following the old paper more closely, the route figure now shows the **top 20 LCPs** against the benchmark flyway, and the coefficient figure compares the coefficient distributions of those top 20 new H3 routes against the full old-paper behavior set.
 
 The most important things to inspect next are:
 - whether the lowest-RMSE behaviors cluster in a recognizable region of coefficient space
