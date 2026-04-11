@@ -191,6 +191,27 @@ Purpose:
 - quantify interannual variability in optimal routes
 - test sensitivity to movement weights
 
+Implementation stance for the prototype:
+- build the graph and edge-cost formulation explicitly in our own code
+- use a trusted package implementation of Dijkstra for the first prototype rather than re-coding the shortest-path algorithm immediately
+
+Prototype endpoint rule for the first tests:
+- for the first Dijkstra demonstrations, do not pretend that origin and destination are already perfectly settled biological objects
+- instead, derive temporary representative endpoints from the benchmark coordinate sequences
+- use some form of average / centroid from the **first few benchmark points** as the prototype start
+- use some form of average / centroid from the **last few benchmark points** as the prototype end
+- document exactly how many points are used and how the average is computed in the implementation report
+
+Interpretation:
+- this is a pragmatic testing rule for getting the first routing workflow running transparently
+- it is not yet the final biological endpoint definition
+- endpoint handling should remain revisitable later if we decide to match the original paper more strictly
+
+**RED FLAG, revisit later:**
+- a manual Dijkstra implementation may still be worth building later if we want maximal algorithmic auditability, custom path diagnostics, or exact control over implementation details
+- for now, the scientific priority is transparency in graph construction and edge costs rather than rewriting a standard shortest-path routine
+- revisit this later if package behavior becomes a limitation or if we want a paper appendix / validation section comparing package and manual implementations
+
 Outputs:
 - path geometry
 - cumulative path cost
