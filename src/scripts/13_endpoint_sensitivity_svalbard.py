@@ -19,6 +19,7 @@ COMPONENT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_c
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
 OUTPUT_COORDS_PATH = PROJECT_ROOT / "results" / "tables" / "13_svalbard_endpoint_sensitivity_coordinates.csv"
 OUTPUT_ENDPOINTS_PATH = PROJECT_ROOT / "results" / "tables" / "13_svalbard_endpoint_sensitivity_endpoints.csv"
+OUTPUT_METRICS_PATH = PROJECT_ROOT / "results" / "tables" / "13_svalbard_endpoint_sensitivity_similarity.csv"
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "13_svalbard_endpoint_sensitivity_routes.png"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "13_endpoint-sensitivity-svalbard.md"
 
@@ -84,6 +85,30 @@ def draw_component_map_panel(ax, df, value_col, masked_df, title, vmin, vmax):
     return sc
 
 
+def pairwise_point_distances_km(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    lat1 = np.deg2rad(a[:, 1])[:, None]
+    lon1 = np.deg2rad(a[:, 0])[:, None]
+    lat2 = np.deg2rad(b[:, 1])[None, :]
+    lon2 = np.deg2rad(b[:, 0])[None, :]
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    hav = np.sin(dlat / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    return 6371.0 * 2.0 * np.arcsin(np.sqrt(np.clip(hav, 0.0, 1.0)))
+
+
+def route_similarity_metrics(route_coords: np.ndarray, ref_coords: np.ndarray) -> dict:
+    dist_route_to_ref = pairwise_point_distances_km(route_coords, ref_coords).min(axis=1)
+    dist_ref_to_route = pairwise_point_distances_km(ref_coords, route_coords).min(axis=1)
+    symmetric_all = np.concatenate([dist_route_to_ref, dist_ref_to_route])
+    return {
+        "mean_nearest_km": float(np.mean(symmetric_all)),
+        "median_nearest_km": float(np.median(symmetric_all)),
+        "p95_nearest_km": float(np.percentile(symmetric_all, 95)),
+        "max_nearest_km": float(np.max(symmetric_all)),
+        "fraction_within_1step": float(np.mean(dist_route_to_ref <= 140.0)),
+    }
+
+
 def main() -> None:
     df = pd.read_csv(COMPONENT_PATH)
     env = pd.read_csv(ENV_PATH)
@@ -101,6 +126,7 @@ def main() -> None:
 
     endpoint_rows = []
     coord_rows = []
+    metric_rows = []
     plotted_routes = {behavior: [] for behavior, *_ in WEIGHT_SETS}
 
     for behavior, a, b, c, d in WEIGHT_SETS:
@@ -143,11 +169,32 @@ def main() -> None:
                     "is_reference": is_reference,
                     "status": "ok",
                 })
-                coord_rows.extend(route_to_rows(behavior, route_name, path, graph))
-                plotted_routes[behavior].append((path, graph, is_reference))
+                route_rows = route_to_rows(behavior, route_name, path, graph)
+                coord_rows.extend(route_rows)
+                plotted_routes[behavior].append((route_name, path, graph, is_reference))
 
     endpoint_df = pd.DataFrame(endpoint_rows)
     coords_df = pd.DataFrame(coord_rows)
+
+    for behavior, routes in plotted_routes.items():
+        reference_matches = [item for item in routes if item[3]]
+        if not reference_matches:
+            continue
+        ref_route_name, ref_path, ref_graph, _ = reference_matches[0]
+        ref_first = ref_graph[ref_path[0]][ref_path[1]]
+        ref_coords = np.array([[ref_first["source_lon"], ref_first["source_lat"]]] + [[ref_graph[u][v]["target_lon"], ref_graph[u][v]["target_lat"]] for u, v in zip(ref_path[:-1], ref_path[1:])])
+        for route_name, path, graph, is_reference in routes:
+            first = graph[path[0]][path[1]]
+            route_coords = np.array([[first["source_lon"], first["source_lat"]]] + [[graph[u][v]["target_lon"], graph[u][v]["target_lat"]] for u, v in zip(path[:-1], path[1:])])
+            metrics = route_similarity_metrics(route_coords, ref_coords)
+            metric_rows.append({
+                "behavior": behavior,
+                "route_name": route_name,
+                "is_reference": is_reference,
+                **metrics,
+            })
+
+    metrics_df = pd.DataFrame(metric_rows)
 
     OUTPUT_COORDS_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -155,6 +202,7 @@ def main() -> None:
 
     endpoint_df.to_csv(OUTPUT_ENDPOINTS_PATH, index=False)
     coords_df.to_csv(OUTPUT_COORDS_PATH, index=False)
+    metrics_df.to_csv(OUTPUT_METRICS_PATH, index=False)
 
     masked = env.loc[~env["has_wind_support"]].copy()
     map_env = env.loc[env["has_wind_support"], ["h3_cell", "lon", "lat", "u10", "v10", "chlor_a"]].copy()
@@ -178,7 +226,7 @@ def main() -> None:
     for ax, behavior in zip(axes.ravel(), ["support_only", "crosswind_only", "distance_only", "food_only"]):
         value_col, title = background_cols[behavior]
         sc = draw_component_map_panel(ax, map_env, value_col, masked, title, 0.0, shared_overlay_max)
-        for path, graph, is_reference in plotted_routes[behavior]:
+        for route_name, path, graph, is_reference in plotted_routes[behavior]:
             first = graph[path[0]][path[1]]
             lons = [first["source_lon"]] + [graph[u][v]["target_lon"] for u, v in zip(path[:-1], path[1:])]
             lats = [first["source_lat"]] + [graph[u][v]["target_lat"] for u, v in zip(path[:-1], path[1:])]
@@ -189,6 +237,13 @@ def main() -> None:
     plt.close(fig)
 
     n_success = int((endpoint_df["status"] == "ok").sum())
+    behavior_summary = []
+    if not metrics_df.empty:
+        non_reference = metrics_df.loc[~metrics_df["is_reference"]].copy()
+        if not non_reference.empty:
+            summary = non_reference.groupby("behavior")[["mean_nearest_km", "p95_nearest_km", "fraction_within_1step"]].mean().reset_index()
+            for row in summary.itertuples(index=False):
+                behavior_summary.append(f"- `{row.behavior}`: mean nearest-route distance ≈ **{row.mean_nearest_km:.1f} km**, mean P95 distance ≈ **{row.p95_nearest_km:.1f} km**, mean fraction within 1 H3 step ≈ **{row.fraction_within_1step:.2f}**")
     report = f'''# Endpoint sensitivity for Svalbard spring
 
 ## Question
@@ -206,6 +261,7 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 ## Outputs
 - route coordinates: `results/tables/13_svalbard_endpoint_sensitivity_coordinates.csv`
 - tested endpoint pairs: `results/tables/13_svalbard_endpoint_sensitivity_endpoints.csv`
+- route-to-reference similarity metrics: `results/tables/13_svalbard_endpoint_sensitivity_similarity.csv`
 - overlay figure: `results/figures/13_svalbard_endpoint_sensitivity_routes.png`
 
 ## Quick-look maps
@@ -229,6 +285,28 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 
 ## Run summary
 - successful routes across all tested behavior-endpoint combinations: **{n_success}**
+
+## Quantitative similarity to the reference route
+The table `results/tables/13_svalbard_endpoint_sensitivity_similarity.csv` compares each grey sensitivity route to the red reference route for the same behavior.
+
+Metrics included:
+- symmetric mean nearest-route distance in km
+- symmetric median nearest-route distance in km
+- symmetric 95th-percentile nearest-route distance in km
+- symmetric maximum nearest-route distance in km
+- fraction of sensitivity-route points lying within roughly one H3 step of the reference route
+
+Behavior-level averages across non-reference routes:
+{chr(10).join(behavior_summary) if behavior_summary else '- similarity summary not available'}
+
+## Interpretation
+This figure is useful because it asks a focused structural question before we broaden the behavior space: do small changes in endpoint placement materially alter the least-cost routes, or do the routes remain broadly organized by the cost field itself?
+
+The encouraging part is that the sensitivity experiment can now be inspected both visually and quantitatively. The maps show corridor coherence directly, while the route-to-reference metrics summarize how tightly the grey bundles stay around the red reference path for each behavior.
+
+The key thing to look for is whether each behavior preserves a recognizable corridor under moderate endpoint perturbation, not whether every grey line sits exactly on the red line. If the mean and P95 nearest-route distances stay modest and the within-one-step fraction remains high, that behavior looks more robust to endpoint choice. If those values deteriorate strongly, that behavior is more endpoint-sensitive and should be interpreted more cautiously.
+
+So this step should be read as a diagnostic robustness check, not as a validation result by itself. Its job is to tell us whether the current prototype routes are structurally stable enough to justify the next stage of comparison and expansion.
 '''
     REPORT_PATH.write_text(report)
 
