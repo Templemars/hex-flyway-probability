@@ -47,4 +47,4 @@ The cleaned benchmark tables will act as the canonical environmental input layer
 ## Script
 
 See:
-- `src/scripts/preprocess_benchmark_inputs.py`
+- `src/scripts/01_preprocess_benchmark_inputs.py`
