@@ -211,7 +211,7 @@ def main() -> None:
     if not failed_df.empty:
         failed_df.to_csv(OUTPUT_SUMMARY_PATH.with_name('12_svalbard_dijkstra_failures.csv'), index=False)
 
-    fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
     masked_background = env.copy()
     masked = masked_background.loc[~masked_background["has_wind_support"]].iloc[::20]
     supported = masked_background.loc[masked_background["has_wind_support"]].iloc[::20]
@@ -241,44 +241,43 @@ def main() -> None:
     report = f'''# Run first H3 Dijkstra prototype
 
 ## Question
-What do the first Svalbard spring Dijkstra routes look like across the agreed prototype behavior set?
+What happens when the first Svalbard spring H3 Dijkstra tests are run under four extreme single-factor behaviors, using the current prototype endpoint rule and the ERA5-supported routing mask?
 
 ## Input data
 - `data/processed/grids/h3_edge_cost_components_res3.csv`
 - `data/processed/grids/h3_environment_res3.csv`
 - `data/raw/benchmark_from_2025/gdf_SS_10.csv`
 
-## Behavior set used
+## Tested single-factor behaviors
 This first extreme-behavior batch uses only four single-factor cases, with coefficient order:
 - `a = wind support`
 - `b = crosswind`
 - `c = distance`
 - `d = food`
 
-The tested extreme behaviors are:
-- support only
-- crosswind only
-- distance only
-- food only
+The tested behaviors are:
+- `support_only = (1.0, 0.0, 0.0, 0.0)`
+- `crosswind_only = (0.0, 1.0, 0.0, 0.0)`
+- `distance_only = (0.0, 0.0, 1.0, 0.0)`
+- `food_only = (0.0, 0.0, 0.0, 1.0)`
 
 See:
 - `results/tables/12_svalbard_dijkstra_weight_sets.csv`
 
 ## Routing mask used
-Following the 2025 paper's overwater-routing stance, the first H3 prototype now uses the transferred benchmark ERA5 wind support as its routing-domain mask.
+Following the paper's overwater-routing stance, the first H3 prototype now uses the transferred benchmark ERA5 support as its routing-domain mask.
 
 Implementation here:
 - identify H3 cells that have valid transferred `u10` and `v10` values in the benchmark environmental table
 - keep only edges whose source and target both lie inside that supported domain
-- show supported versus masked cells distinctly on the global route map
+- show the supported versus masked cells directly on the route figure using different colors
 
 Interpretation:
-- this is a data-support mask derived from the benchmark ERA5 support
-- for this prototype it is preferred over a separate polygon land mask because it matches the environmental support actually used in the cost construction
-- the visualization uses the same mask directly, with supported and unsupported cells shown in different colors, rather than importing separate cartographic land geometry
+- this is a routing-domain mask based on the environmental support actually used in the cost construction
+- it should be interpreted as a benchmark ERA5-supported domain for the prototype, not yet as a final polished biological mask definition
 
 ## Prototype endpoint rule used
-This first Dijkstra test uses a temporary transparent endpoint rule rather than a claimed final biological endpoint definition.
+This first Dijkstra test still uses a pragmatic temporary endpoint rule rather than a final biological endpoint definition.
 
 Implementation here:
 - start point = mean of the first **3** benchmark summary points
@@ -297,34 +296,37 @@ See:
 - route figure: `results/figures/12_svalbard_dijkstra_routes.png`
 
 Map framing:
-- the route figure is focused on the Atlantic domain for easier interpretation of the trans-Atlantic flyway geometry
+- the route figure is focused on the Atlantic domain
+- the figure now uses a more portrait-oriented layout to make the trans-Atlantic route geometry easier to inspect
 
 ## Quick-look figure
 
 ![First H3 Dijkstra prototype routes](../figures/12_svalbard_dijkstra_routes.png)
 
-## First reading
+## Run status summary
 - number of tested behaviors: **{len(weights_df)}**
-- successful route runs: **{0 if summary_df.empty else len(summary_df)}**
-- failed route runs: **{0 if failed_df.empty else len(failed_df)}**
+- number of successful route runs: **{0 if summary_df.empty else len(summary_df)}**
+- number of failed route runs: **{0 if failed_df.empty else len(failed_df)}**
 
 ## Interpretation
-This is the first end-to-end H3 route prototype with an explicit ERA5-supported routing domain: standardized edge costs are now being turned into actual destination-constrained paths. That is a meaningful transition from cost construction into flyway simulation.
+This is the first end-to-end H3 route prototype with an explicit ERA5-supported routing domain. That is an important milestone, because the project has now moved from component construction into actual destination-constrained path generation.
 
-The current routes should still be treated as prototype behavior diagnostics, not final biological claims, because:
+At the same time, the current outputs should still be treated as diagnostic prototype results rather than validated flyway simulations. That caution is needed because:
 - the endpoint rule is still provisional
 - the distance term remains under explicit caution
-- the behavior set is a deliberately small exploratory subset
+- the current batch uses deliberately extreme single-factor behaviors
+- some behaviors do not yet yield stable successful Dijkstra results under the present setup
 
-A scientifically important issue also emerged immediately: at least one behavior can fail under package Dijkstra even when the cost components are non-negative. If that happens, it should be treated as a modeling red flag, not hidden as a technical nuisance.
+This means the present run is most useful for exposing model behavior and failure modes, not for making strong biological claims.
 
-## Points to watch
-- if some routes look implausibly grid-aligned, revisit the distance red flag
-- if behavior differences are weak, the component scaling or endpoint rule may be suppressing contrast
-- if behavior differences are extreme, inspect whether one component is dominating too strongly
+## What to pay attention to
+- whether the successful routes look strongly grid-aligned
+- whether the single-factor runs differ in interpretable ways or collapse toward similar paths
+- whether failures cluster in particular components, which would suggest component-specific pathologies rather than a generic routing issue
+- whether the provisional endpoint rule is suppressing or exaggerating differences among behaviors
 
 ## Next step
-Inspect the route table and summaries carefully, then decide whether the first endpoint rule is good enough to keep for the next round or should already be refined.
+Inspect the successful and failed single-factor runs explicitly, then decide whether to refine the endpoint definition, modify the tested behavior set, or adjust the cost setup before moving further into comparison against the benchmark flyway.
 '''
     if best is not None:
         report += f"\nAdditional route summary:\n- best current prototype by total cost: **{best['behavior']}**\n- best prototype total cost: **{best['total_cost']:.3f}**\n- best prototype total distance: **{best['total_distance_km']:.1f} km**\n- best prototype step count: **{int(best['n_steps'])}**\n"
