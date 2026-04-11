@@ -24,16 +24,17 @@ The tested extreme behaviors are:
 See:
 - `results/tables/12_svalbard_dijkstra_weight_sets.csv`
 
-## Land masking used
-Following the 2025 paper's Methods, land cells were excluded from the routing domain.
+## Routing mask used
+Following the 2025 paper's overwater-routing stance, the first H3 prototype now uses the transferred benchmark ERA5 wind support as its routing-domain mask.
 
 Implementation here:
-- classify H3 cell centroids against a global land polygon dataset
-- treat cells whose centroids fall on land as land cells
-- remove any edge whose source or target cell is classified as land
-- show land in a distinct color on the global route map
+- identify H3 cells that have valid transferred `u10` and `v10` values in the benchmark environmental table
+- keep only edges whose source and target both lie inside that supported domain
+- show supported versus masked cells distinctly on the global route map
 
-This remains a pragmatic first land mask and may later be refined if coastlines or narrow passages require more careful handling.
+Interpretation:
+- this is a data-support mask derived from the benchmark ERA5 support
+- for this prototype it is preferred over a separate polygon land mask because it matches the environmental support actually used in the cost construction
 
 ## Prototype endpoint rule used
 This first Dijkstra test uses a temporary transparent endpoint rule rather than a claimed final biological endpoint definition.
@@ -60,11 +61,11 @@ See:
 
 ## First reading
 - number of tested behaviors: **4**
-- successful route runs: **1**
-- failed route runs: **3**
+- successful route runs: **4**
+- failed route runs: **0**
 
 ## Interpretation
-This is the first end-to-end H3 route prototype with an explicit overwater routing domain: standardized edge costs are now being turned into actual destination-constrained paths. That is a meaningful transition from cost construction into flyway simulation.
+This is the first end-to-end H3 route prototype with an explicit ERA5-supported routing domain: standardized edge costs are now being turned into actual destination-constrained paths. That is a meaningful transition from cost construction into flyway simulation.
 
 The current routes should still be treated as prototype behavior diagnostics, not final biological claims, because:
 - the endpoint rule is still provisional
@@ -82,10 +83,7 @@ A scientifically important issue also emerged immediately: at least one behavior
 Inspect the route table and summaries carefully, then decide whether the first endpoint rule is good enough to keep for the next round or should already be refined.
 
 Additional route summary:
-- best current prototype by total cost: **distance_only**
-- best prototype total cost: **nan**
-- best prototype total distance: **17951.8 km**
-- best prototype step count: **145**
-
-Failure note:
-- at least one prototype behavior failed during package Dijkstra and has been written to `results/tables/12_svalbard_dijkstra_failures.csv` for inspection
+- best current prototype by total cost: **food_only**
+- best prototype total cost: **1292.521**
+- best prototype total distance: **22714.0 km**
+- best prototype step count: **190**
