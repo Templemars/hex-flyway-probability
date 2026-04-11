@@ -2,9 +2,9 @@
 
 ## Immediate technical next steps
 
-1. After the first mixed-behavior Svalbard batch, should we broaden the coefficient set modestly or move straight to route-to-benchmark comparison?
-2. Should the next case remain Svalbard spring for deeper coefficient testing, or should Netherlands spring now be prepared for comparison?
-3. Which comparison metric should be implemented first for the mixed-behavior routes: RMSE against the benchmark flyway summary, a route-shape metric, or both?
+1. How should RMSE be implemented for the full 216-behavior Svalbard sweep against `gdf_SS_10.csv`?
+2. After RMSE ranking on Svalbard spring, should the next step be Netherlands spring or deeper inspection of the best Svalbard routes?
+3. Do we need to reconstruct the paper's exact 195-filtered behavior set after the current 216-behavior bounded sweep?
 
 ## Scientific design checks
 
