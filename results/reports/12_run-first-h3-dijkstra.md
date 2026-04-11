@@ -56,6 +56,9 @@ See:
 - endpoint table: `results/tables/12_svalbard_dijkstra_endpoints.csv`
 - route figure: `results/figures/12_svalbard_dijkstra_routes.png`
 
+Map framing:
+- the route figure is focused on the Atlantic domain for easier interpretation of the trans-Atlantic flyway geometry
+
 ## Quick-look figure
 
 ![First H3 Dijkstra prototype routes](../figures/12_svalbard_dijkstra_routes.png)

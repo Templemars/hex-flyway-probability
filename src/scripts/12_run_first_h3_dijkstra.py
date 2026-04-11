@@ -230,6 +230,8 @@ def main() -> None:
     ax.set_title("First H3 Dijkstra prototype routes, Svalbard spring")
     ax.set_xlabel("Longitude (degrees)")
     ax.set_ylabel("Latitude (degrees)")
+    ax.set_xlim(-95, 35)
+    ax.set_ylim(-80, 85)
     if successful_behaviors:
         ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=8)
     fig.savefig(FIGURE_PATH, dpi=170)
@@ -293,6 +295,9 @@ See:
 - weight table: `results/tables/12_svalbard_dijkstra_weight_sets.csv`
 - endpoint table: `results/tables/12_svalbard_dijkstra_endpoints.csv`
 - route figure: `results/figures/12_svalbard_dijkstra_routes.png`
+
+Map framing:
+- the route figure is focused on the Atlantic domain for easier interpretation of the trans-Atlantic flyway geometry
 
 ## Quick-look figure
 
