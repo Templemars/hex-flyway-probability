@@ -31,7 +31,7 @@ Audit values:
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
-- for the distance map, construct a diagnostic northward cumulative-distance surface by greedily following the most northward outgoing edge from each cell until no further northward move exists
+- for the distance map, assign to each cell the true distance of the outgoing edge whose bearing is closest to north
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -39,7 +39,7 @@ Audit values:
 - raw parallel wind cost = distance from `P99(windsupport)`
 - raw crosswind cost = magnitude of the wind component perpendicular to movement
 - raw distance cost = true H3 edge distance in km for the edge table
-- diagnostic distance map = cumulative northward path length obtained by repeatedly following the outgoing edge with the largest positive latitude gain
+- diagnostic distance map = true distance of the outgoing edge whose bearing is closest to north, one value per source cell
 - raw food cost = `|log(chla) + 1|` after capping high-productivity cells and flooring non-positive chlorophyll values for numerical stability
 - standardized component cost = `100 * raw_component / P99(raw_component)`
 
@@ -80,11 +80,11 @@ The four maps are also useful because they separate two different views of the m
 - cell-level component surfaces used for intuitive inspection
 
 For the wind maps, the northward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
-For the distance map, the northward cumulative surface is also diagnostic rather than part of the routing graph itself. It is meant to make the map set conceptually parallel, not to replace the true edge-distance component used in the model.
+For the distance map, each cell is assigned the true distance of its outgoing edge closest to north. This is also diagnostic rather than part of the routing graph itself, but it is a real edge quantity rather than an artificial cumulative construction.
 
 ## Points to watch
 - the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
-- the mapped northward cumulative distance surface is a separate diagnostic layer for interpretability
+- the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
 - the legacy constant distance reference extracted from the standardized wind term is **49.999**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 

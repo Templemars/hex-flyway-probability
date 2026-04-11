@@ -89,58 +89,37 @@ def compute_food_cost(source_chla: pd.Series, floor: float | None = None) -> pd.
     return pd.Series(food_cost, index=source_chla.index)
 
 
-def draw_component_map(df: pd.DataFrame, value_col: str, output_path: Path, title: str, cmap: str = "viridis") -> None:
+def draw_component_map(
+    df: pd.DataFrame,
+    value_col: str,
+    output_path: Path,
+    title: str,
+    colorbar_label: str,
+    cmap: str = "viridis",
+) -> None:
     fig, ax = plt.subplots(figsize=(11, 6.5), constrained_layout=True)
     sc = ax.scatter(df["lon"], df["lat"], c=df[value_col], s=10, cmap=cmap, linewidths=0)
     ax.set_title(title)
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
+    ax.set_xlabel("Longitude (degrees)")
+    ax.set_ylabel("Latitude (degrees)")
     cbar = fig.colorbar(sc, ax=ax)
-    cbar.set_label(value_col)
+    cbar.set_label(colorbar_label)
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
 
 
-def compute_northward_cumulative_distance(edge_df: pd.DataFrame) -> pd.Series:
-    """Approximate cumulative northward distance by greedily following the most northward outgoing edge.
+def select_northward_edge_distance(edge_df: pd.DataFrame) -> pd.Series:
+    """For each source cell, choose the outgoing edge whose bearing is closest to north.
 
-    For each source cell, choose the outgoing edge with the largest positive latitude gain.
-    Then accumulate northward distance until no further northward move exists.
-    This is a diagnostic map, not the routing model itself.
+    This gives a real edge-distance quantity that is directionally aligned with the
+    diagnostic northward maps for wind.
     """
-    edges = edge_df[["source_h3", "target_h3", "source_lat", "target_lat", "edge_distance_km"]].copy()
-    edges["lat_gain"] = edges["target_lat"] - edges["source_lat"]
-    north_edges = edges[edges["lat_gain"] > 0].copy()
-    north_edges = north_edges.sort_values(["source_h3", "lat_gain", "edge_distance_km"], ascending=[True, False, True])
-    best_north = north_edges.drop_duplicates(subset=["source_h3"], keep="first")
-
-    next_map = dict(zip(best_north["source_h3"], best_north["target_h3"]))
-    dist_map = dict(zip(best_north["source_h3"], best_north["edge_distance_km"]))
-    lat_map = edge_df.groupby("source_h3")["source_lat"].first().to_dict()
-
-    memo: dict[str, float] = {}
-    visiting: set[str] = set()
-
-    def total_distance(cell: str) -> float:
-        if cell in memo:
-            return memo[cell]
-        if cell in visiting:
-            return 0.0
-        visiting.add(cell)
-        if cell not in next_map:
-            value = 0.0
-        else:
-            nxt = next_map[cell]
-            if lat_map.get(nxt, -np.inf) <= lat_map.get(cell, np.inf):
-                value = 0.0
-            else:
-                value = float(dist_map[cell]) + total_distance(nxt)
-        visiting.remove(cell)
-        memo[cell] = value
-        return value
-
-    values = {cell: total_distance(cell) for cell in lat_map}
-    return pd.Series(values)
+    edges = edge_df[["source_h3", "edge_bearing_deg", "edge_distance_km"]].copy()
+    circular_distance_to_north = np.abs(((edges["edge_bearing_deg"] + 180.0) % 360.0) - 180.0)
+    edges["north_offset_deg"] = circular_distance_to_north
+    edges = edges.sort_values(["source_h3", "north_offset_deg", "edge_distance_km"], ascending=[True, True, True])
+    best_north = edges.drop_duplicates(subset=["source_h3"], keep="first")
+    return pd.Series(best_north["edge_distance_km"].to_numpy(), index=best_north["source_h3"].to_numpy())
 
 
 def main() -> None:
@@ -228,9 +207,9 @@ def main() -> None:
     env_map = env[["h3_cell", "lon", "lat", "u10", "v10", "chlor_a"]].copy()
     env_map["parallel_wind_cost_northward_raw"] = northward_parallel_raw
     env_map["crosswind_cost_northward_raw"] = northward_crosswind_raw
-    northward_cumulative_distance = compute_northward_cumulative_distance(out)
+    northward_edge_distance = select_northward_edge_distance(out)
     env_map = env_map.merge(
-        northward_cumulative_distance.rename("northward_cumulative_distance_km"),
+        northward_edge_distance.rename("northward_edge_distance_km"),
         left_on="h3_cell",
         right_index=True,
         how="left",
@@ -238,13 +217,37 @@ def main() -> None:
     env_map["food_cost_raw"] = compute_food_cost(env_map["chlor_a"])
     env_map["parallel_wind_cost_northward_std"] = standardize_to_100(env_map["parallel_wind_cost_northward_raw"])
     env_map["crosswind_cost_northward_std"] = standardize_to_100(env_map["crosswind_cost_northward_raw"])
-    env_map["distance_cost_std"] = standardize_to_100(env_map["northward_cumulative_distance_km"].fillna(0.0))
+    env_map["distance_cost_std"] = standardize_to_100(env_map["northward_edge_distance_km"].fillna(0.0))
     env_map["food_cost_std"] = standardize_to_100(env_map["food_cost_raw"])
 
-    draw_component_map(env_map, "parallel_wind_cost_northward_std", MAP_WIND_PATH, "Parallel wind cost surface for straight northward flight")
-    draw_component_map(env_map, "crosswind_cost_northward_std", MAP_CROSSWIND_PATH, "Crosswind cost surface for straight northward flight")
-    draw_component_map(env_map, "distance_cost_std", MAP_DISTANCE_PATH, "Northward cumulative distance surface")
-    draw_component_map(env_map, "food_cost_std", MAP_FOOD_PATH, "Food cost surface from chlorophyll-a")
+    draw_component_map(
+        env_map,
+        "parallel_wind_cost_northward_std",
+        MAP_WIND_PATH,
+        "Parallel wind cost surface for straight northward flight",
+        "Standardized cost (0-100 SCU)",
+    )
+    draw_component_map(
+        env_map,
+        "crosswind_cost_northward_std",
+        MAP_CROSSWIND_PATH,
+        "Crosswind cost surface for straight northward flight",
+        "Standardized cost (0-100 SCU)",
+    )
+    draw_component_map(
+        env_map,
+        "distance_cost_std",
+        MAP_DISTANCE_PATH,
+        "Distance cost surface from outgoing edge closest to north",
+        "Standardized cost (0-100 SCU), based on edge distance in km",
+    )
+    draw_component_map(
+        env_map,
+        "food_cost_std",
+        MAP_FOOD_PATH,
+        "Food cost surface from chlorophyll-a",
+        "Standardized cost (0-100 SCU)",
+    )
 
     legacy_ref = out["legacy_constant_distance_reference"].iloc[0]
     zero_chla_count = int((env["chlor_a"] <= 0).sum())
@@ -282,7 +285,7 @@ Audit values:
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
-- for the distance map, construct a diagnostic northward cumulative-distance surface by greedily following the most northward outgoing edge from each cell until no further northward move exists
+- for the distance map, assign to each cell the true distance of the outgoing edge whose bearing is closest to north
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -290,7 +293,7 @@ Audit values:
 - raw parallel wind cost = distance from `P99(windsupport)`
 - raw crosswind cost = magnitude of the wind component perpendicular to movement
 - raw distance cost = true H3 edge distance in km for the edge table
-- diagnostic distance map = cumulative northward path length obtained by repeatedly following the outgoing edge with the largest positive latitude gain
+- diagnostic distance map = true distance of the outgoing edge whose bearing is closest to north, one value per source cell
 - raw food cost = `|log(chla) + 1|` after capping high-productivity cells and flooring non-positive chlorophyll values for numerical stability
 - standardized component cost = `100 * raw_component / P99(raw_component)`
 
@@ -331,11 +334,11 @@ The four maps are also useful because they separate two different views of the m
 - cell-level component surfaces used for intuitive inspection
 
 For the wind maps, the northward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
-For the distance map, the northward cumulative surface is also diagnostic rather than part of the routing graph itself. It is meant to make the map set conceptually parallel, not to replace the true edge-distance component used in the model.
+For the distance map, each cell is assigned the true distance of its outgoing edge closest to north. This is also diagnostic rather than part of the routing graph itself, but it is a real edge quantity rather than an artificial cumulative construction.
 
 ## Points to watch
 - the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
-- the mapped northward cumulative distance surface is a separate diagnostic layer for interpretability
+- the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
 - the legacy constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 
