@@ -213,9 +213,8 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
     masked_background = env.copy()
-    masked_background["mask_class"] = np.where(masked_background["has_wind_support"], "supported", "masked")
-    masked = masked_background.loc[masked_background["mask_class"] == "masked"].iloc[::20]
-    supported = masked_background.loc[masked_background["mask_class"] == "supported"].iloc[::20]
+    masked = masked_background.loc[~masked_background["has_wind_support"]].iloc[::20]
+    supported = masked_background.loc[masked_background["has_wind_support"]].iloc[::20]
     ax.scatter(masked["lon"], masked["lat"], s=4, color="#c8b08f", alpha=0.55, label="Outside ERA5-supported mask")
     ax.scatter(supported["lon"], supported["lat"], s=2, color="#dceaf7", alpha=0.35, label="ERA5-supported domain")
     successful_behaviors = list(summary_df["behavior"]) if not summary_df.empty else []
@@ -274,6 +273,7 @@ Implementation here:
 Interpretation:
 - this is a data-support mask derived from the benchmark ERA5 support
 - for this prototype it is preferred over a separate polygon land mask because it matches the environmental support actually used in the cost construction
+- the visualization uses the same mask directly, with supported and unsupported cells shown in different colors, rather than importing separate cartographic land geometry
 
 ## Prototype endpoint rule used
 This first Dijkstra test uses a temporary transparent endpoint rule rather than a claimed final biological endpoint definition.

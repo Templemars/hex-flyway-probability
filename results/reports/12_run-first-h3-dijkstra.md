@@ -35,6 +35,7 @@ Implementation here:
 Interpretation:
 - this is a data-support mask derived from the benchmark ERA5 support
 - for this prototype it is preferred over a separate polygon land mask because it matches the environmental support actually used in the cost construction
+- the visualization uses the same mask directly, with supported and unsupported cells shown in different colors, rather than importing separate cartographic land geometry
 
 ## Prototype endpoint rule used
 This first Dijkstra test uses a temporary transparent endpoint rule rather than a claimed final biological endpoint definition.
