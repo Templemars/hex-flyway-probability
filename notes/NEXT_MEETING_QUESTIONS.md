@@ -2,9 +2,9 @@
 
 ## Immediate technical next steps
 
-1. Which first prototype coefficient sets should we test on the standardized H3 component table before the first Dijkstra runs?
-2. Should the first Dijkstra demonstration focus only on Svalbard spring, or should Netherlands spring be prepared in parallel for immediate comparison?
-3. What should the first Dijkstra step output as tables, figures, and report summaries so the route behavior is easy to inspect?
+1. After the first mixed-behavior Svalbard batch, should we broaden the coefficient set modestly or move straight to route-to-benchmark comparison?
+2. Should the next case remain Svalbard spring for deeper coefficient testing, or should Netherlands spring now be prepared for comparison?
+3. Which comparison metric should be implemented first for the mixed-behavior routes: RMSE against the benchmark flyway summary, a route-shape metric, or both?
 
 ## Scientific design checks
 
