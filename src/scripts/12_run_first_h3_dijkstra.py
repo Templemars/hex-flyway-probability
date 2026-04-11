@@ -213,10 +213,10 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
     masked_background = env.copy()
-    masked = masked_background.loc[~masked_background["has_wind_support"]].iloc[::20]
-    supported = masked_background.loc[masked_background["has_wind_support"]].iloc[::20]
-    ax.scatter(masked["lon"], masked["lat"], s=4, color="#c8b08f", alpha=0.55, label="Outside ERA5-supported mask")
-    ax.scatter(supported["lon"], supported["lat"], s=2, color="#dceaf7", alpha=0.35, label="ERA5-supported domain")
+    masked = masked_background.loc[~masked_background["has_wind_support"]].copy()
+    supported = masked_background.loc[masked_background["has_wind_support"]].copy()
+    ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.75, linewidths=0, label="Outside ERA5-supported mask")
+    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.45, linewidths=0, label="ERA5-supported domain")
     successful_behaviors = list(summary_df["behavior"]) if not summary_df.empty else []
     colors = plt.cm.tab10(np.linspace(0, 1, max(len(successful_behaviors), 1)))
     for color, behavior in zip(colors, successful_behaviors):
@@ -270,7 +270,7 @@ Following the paper's overwater-routing stance, the first H3 prototype now uses 
 Implementation here:
 - identify H3 cells that have valid transferred `u10` and `v10` values in the benchmark environmental table
 - keep only edges whose source and target both lie inside that supported domain
-- show the supported versus masked cells directly on the route figure using different colors
+- show the supported versus masked cells directly on the route figure using different colors and gridcell-like hex markers rather than centroid dots
 
 Interpretation:
 - this is a routing-domain mask based on the environmental support actually used in the cost construction
@@ -298,6 +298,7 @@ See:
 Map framing:
 - the route figure is focused on the Atlantic domain
 - the figure now uses a more portrait-oriented layout to make the trans-Atlantic route geometry easier to inspect
+- the routing mask is visualized with gridcell-like hex markers rather than sparse centroid dots, so the supported and masked regions read more like spatial cells
 
 ## Quick-look figure
 

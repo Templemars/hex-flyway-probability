@@ -30,7 +30,7 @@ Following the paper's overwater-routing stance, the first H3 prototype now uses 
 Implementation here:
 - identify H3 cells that have valid transferred `u10` and `v10` values in the benchmark environmental table
 - keep only edges whose source and target both lie inside that supported domain
-- show the supported versus masked cells directly on the route figure using different colors
+- show the supported versus masked cells directly on the route figure using different colors and gridcell-like hex markers rather than centroid dots
 
 Interpretation:
 - this is a routing-domain mask based on the environmental support actually used in the cost construction
@@ -58,6 +58,7 @@ See:
 Map framing:
 - the route figure is focused on the Atlantic domain
 - the figure now uses a more portrait-oriented layout to make the trans-Atlantic route geometry easier to inspect
+- the routing mask is visualized with gridcell-like hex markers rather than sparse centroid dots, so the supported and masked regions read more like spatial cells
 
 ## Quick-look figure
 
