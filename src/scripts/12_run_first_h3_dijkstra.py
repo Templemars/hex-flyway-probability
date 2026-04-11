@@ -47,28 +47,28 @@ def nearest_h3_cell(env: pd.DataFrame, lon: float, lat: float) -> str:
     return str(env.loc[distance.idxmin(), "h3_cell"])
 
 
-def derive_prototype_endpoints(benchmark: pd.DataFrame, env: pd.DataFrame, n_points: int = 3) -> tuple[dict, dict]:
-    start_points = benchmark.head(n_points)
-    end_points = benchmark.tail(n_points)
+def derive_prototype_endpoints(benchmark: pd.DataFrame, env: pd.DataFrame) -> tuple[dict, dict]:
+    start_point = benchmark.iloc[0]
+    end_point = benchmark.iloc[-1]
 
-    start_lon = float(start_points["lon_median10"].mean())
-    start_lat = float(start_points["lat_median10"].mean())
-    end_lon = float(end_points["lon_median10"].mean())
-    end_lat = float(end_points["lat_median10"].mean())
+    start_lon = float(start_point["lon_median10"])
+    start_lat = float(start_point["lat_median10"])
+    end_lon = float(end_point["lon_median10"])
+    end_lat = float(end_point["lat_median10"])
 
     start_cell = nearest_h3_cell(env, start_lon, start_lat)
     end_cell = nearest_h3_cell(env, end_lon, end_lat)
 
     start_record = {
         "endpoint_role": "start",
-        "n_benchmark_points_used": n_points,
+        "benchmark_rule": "first_row_of_gdf_SS_10",
         "lon": start_lon,
         "lat": start_lat,
         "nearest_h3_cell": start_cell,
     }
     end_record = {
         "endpoint_role": "end",
-        "n_benchmark_points_used": n_points,
+        "benchmark_rule": "last_row_of_gdf_SS_10",
         "lon": end_lon,
         "lat": end_lat,
         "nearest_h3_cell": end_cell,
@@ -187,7 +187,7 @@ def main() -> None:
     water_cells = set(env.loc[env["has_wind_support"], "h3_cell"].astype(str))
     df = df[df["source_h3"].astype(str).isin(water_cells) & df["target_h3"].astype(str).isin(water_cells)].copy()
 
-    start_record, end_record = derive_prototype_endpoints(benchmark, env, n_points=3)
+    start_record, end_record = derive_prototype_endpoints(benchmark, env)
     start_cell = start_record["nearest_h3_cell"]
     end_cell = end_record["nearest_h3_cell"]
 
@@ -342,9 +342,9 @@ Interpretation:
 This first Dijkstra test still uses a pragmatic temporary endpoint rule rather than a final biological endpoint definition.
 
 Implementation here:
-- start point = mean of the first **3** benchmark summary points
-- end point = mean of the last **3** benchmark summary points
-- these mean points were then matched to the nearest H3 cells
+- start point = the **first row** of `gdf_SS_10.csv`
+- end point = the **last row** of `gdf_SS_10.csv`
+- these two summary points were then matched to the nearest H3 cells
 
 See:
 - `results/tables/12_svalbard_dijkstra_endpoints.csv`

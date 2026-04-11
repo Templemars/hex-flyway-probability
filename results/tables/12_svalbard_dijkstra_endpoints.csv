@@ -1,3 +1,3 @@
-endpoint_role,n_benchmark_points_used,lon,lat,nearest_h3_cell
-start,3,-28.852867103333335,-64.97994995666667,83eedcfffffffff
-end,3,-27.007392518333337,53.52708920833334,8318b6fffffffff
+endpoint_role,benchmark_rule,lon,lat,nearest_h3_cell
+start,first_row_of_gdf_SS_10,-20.00285938,-71.25708173,83eea8fffffffff
+end,last_row_of_gdf_SS_10,-18.12660637,62.07117996,83076bfffffffff

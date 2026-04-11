@@ -40,9 +40,9 @@ Interpretation:
 This first Dijkstra test still uses a pragmatic temporary endpoint rule rather than a final biological endpoint definition.
 
 Implementation here:
-- start point = mean of the first **3** benchmark summary points
-- end point = mean of the last **3** benchmark summary points
-- these mean points were then matched to the nearest H3 cells
+- start point = the **first row** of `gdf_SS_10.csv`
+- end point = the **last row** of `gdf_SS_10.csv`
+- these two summary points were then matched to the nearest H3 cells
 
 See:
 - `results/tables/12_svalbard_dijkstra_endpoints.csv`
@@ -106,6 +106,6 @@ Inspect the successful and failed single-factor runs explicitly, then decide whe
 
 Additional route summary:
 - best current prototype by total cost: **food_only**
-- best prototype total cost: **1292.521**
-- best prototype total distance: **22714.0 km**
-- best prototype step count: **190**
+- best prototype total cost: **1308.804**
+- best prototype total distance: **24460.9 km**
+- best prototype step count: **205**

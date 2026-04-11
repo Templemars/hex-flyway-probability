@@ -196,15 +196,14 @@ Implementation stance for the prototype:
 - use a trusted package implementation of Dijkstra for the first prototype rather than re-coding the shortest-path algorithm immediately
 
 Prototype endpoint rule for the first tests:
-- for the first Dijkstra demonstrations, do not pretend that origin and destination are already perfectly settled biological objects
-- instead, derive temporary representative endpoints from the benchmark coordinate sequences
-- use some form of average / centroid from the **first few benchmark points** as the prototype start
-- use some form of average / centroid from the **last few benchmark points** as the prototype end
-- document exactly how many points are used and how the average is computed in the implementation report
+- for the current Svalbard spring Dijkstra prototype, use the latitude-binned validation summary `gdf_SS_10.csv`
+- define the prototype start from the **first row** of `gdf_SS_10.csv`
+- define the prototype end from the **last row** of `gdf_SS_10.csv`
+- use the summary coordinates directly and match them to the nearest H3 cells
 
 Interpretation:
-- this is a pragmatic testing rule for getting the first routing workflow running transparently
-- it is not yet the final biological endpoint definition
+- this is still a pragmatic prototype rule, but it is cleaner than averaging arbitrary row subsets
+- it keeps the endpoint choice tied directly to the actual validation object currently used for Svalbard spring
 - endpoint handling should remain revisitable later if we decide to match the original paper more strictly
 
 **RED FLAG, revisit later:**
