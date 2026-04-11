@@ -30,12 +30,15 @@ See:
 - failed-behavior table when relevant: `results/tables/15_svalbard_full_bounded_dijkstra_failures.csv`
 - route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes.png`
 - transparent route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png`
+- route-point density heatmap: `results/figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png`
 
 ## Quick-look figures
 
 ![Full bounded H3 Dijkstra sweep](../figures/15_svalbard_full_bounded_dijkstra_routes.png)
 
 ![Full bounded H3 Dijkstra sweep, transparent overview](../figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png)
+
+![Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap](../figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png)
 
 ## Run summary
 - number of tested behaviors: **216**
@@ -51,6 +54,7 @@ The key things to inspect visually are:
 - whether the route family collapses into a few dominant corridors or fills a broad envelope
 - whether some combinations appear to produce visibly implausible detours or extreme spread
 - whether the route cloud suggests that the current graph and endpoint setup are capable of spanning the benchmark flyway geometry at all
+- whether the semi-transparent wide-line plots and the point-density heatmap reveal concentrated corridor use or a much more diffuse route field across the Atlantic domain
 
 ## Next step
 Use this full bounded route set as the candidate pool for the first explicit route-to-benchmark comparison against the Svalbard spring 10-degree mean flyway.

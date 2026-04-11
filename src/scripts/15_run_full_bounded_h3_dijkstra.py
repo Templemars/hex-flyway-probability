@@ -36,6 +36,7 @@ OUTPUT_WEIGHTS_PATH = PROJECT_ROOT / "results" / "tables" / "15_svalbard_full_bo
 OUTPUT_ENDPOINTS_PATH = PROJECT_ROOT / "results" / "tables" / "15_svalbard_full_bounded_dijkstra_endpoints.csv"
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_routes.png"
 FIGURE_DENSITY_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_routes_transparent.png"
+FIGURE_HEATMAP_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_point_density_heatmap.png"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "15_run-full-bounded-h3-dijkstra.md"
 
 
@@ -210,11 +211,11 @@ def main() -> None:
     masked = env.loc[~env["has_wind_support"]].copy()
     supported = env.loc[env["has_wind_support"]].copy()
     ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.75, linewidths=0)
-    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.25, linewidths=0)
+    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.20, linewidths=0)
     for behavior, route in path_df.groupby("behavior"):
         lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
         lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
-        ax.plot(lons, lats, color="#355f8d", linewidth=0.6, alpha=0.18)
+        ax.plot(lons, lats, color="#355f8d", linewidth=1.6, alpha=0.10)
     ax.scatter([start_record["lon"], end_record["lon"]], [start_record["lat"], end_record["lat"]], color="black", s=35, marker="x")
     ax.set_title("Full bounded H3 Dijkstra sweep, Svalbard spring")
     ax.set_xlabel("Longitude (degrees)")
@@ -226,11 +227,11 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
     ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.75, linewidths=0)
-    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.15, linewidths=0)
+    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.12, linewidths=0)
     for behavior, route in path_df.groupby("behavior"):
         lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
         lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
-        ax.plot(lons, lats, color="black", linewidth=0.5, alpha=0.05)
+        ax.plot(lons, lats, color="black", linewidth=2.2, alpha=0.025)
     ax.scatter([start_record["lon"], end_record["lon"]], [start_record["lat"], end_record["lat"]], color="crimson", s=35, marker="x")
     ax.set_title("Full bounded H3 Dijkstra sweep, transparent overview")
     ax.set_xlabel("Longitude (degrees)")
@@ -238,6 +239,27 @@ def main() -> None:
     ax.set_xlim(-95, 35)
     ax.set_ylim(-80, 85)
     fig.savefig(FIGURE_DENSITY_PATH, dpi=170)
+    plt.close(fig)
+
+    point_df = path_df[["source_lon", "source_lat"]].rename(columns={"source_lon": "lon", "source_lat": "lat"}).copy()
+    end_points = path_df.groupby("behavior").tail(1)[["target_lon", "target_lat"]].rename(columns={"target_lon": "lon", "target_lat": "lat"})
+    point_df = pd.concat([point_df, end_points], ignore_index=True)
+    lon_bins = np.arange(-95, 36, 2.0)
+    lat_bins = np.arange(-80, 86, 2.0)
+    heatmap, xedges, yedges = np.histogram2d(point_df["lon"], point_df["lat"], bins=[lon_bins, lat_bins])
+    heatmap = heatmap.T
+
+    fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
+    ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.5, linewidths=0)
+    mesh = ax.pcolormesh(xedges, yedges, heatmap, cmap="magma", shading="auto")
+    cbar = fig.colorbar(mesh, ax=ax)
+    cbar.set_label("Route-point density per 2° bin")
+    ax.set_title("Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap")
+    ax.set_xlabel("Longitude (degrees)")
+    ax.set_ylabel("Latitude (degrees)")
+    ax.set_xlim(-95, 35)
+    ax.set_ylim(-80, 85)
+    fig.savefig(FIGURE_HEATMAP_PATH, dpi=170)
     plt.close(fig)
 
     report = f'''# Run full bounded H3 Dijkstra sweep
@@ -272,12 +294,15 @@ See:
 - failed-behavior table when relevant: `results/tables/15_svalbard_full_bounded_dijkstra_failures.csv`
 - route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes.png`
 - transparent route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png`
+- route-point density heatmap: `results/figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png`
 
 ## Quick-look figures
 
 ![Full bounded H3 Dijkstra sweep](../figures/15_svalbard_full_bounded_dijkstra_routes.png)
 
 ![Full bounded H3 Dijkstra sweep, transparent overview](../figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png)
+
+![Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap](../figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png)
 
 ## Run summary
 - number of tested behaviors: **{len(weights_df)}**
@@ -293,6 +318,7 @@ The key things to inspect visually are:
 - whether the route family collapses into a few dominant corridors or fills a broad envelope
 - whether some combinations appear to produce visibly implausible detours or extreme spread
 - whether the route cloud suggests that the current graph and endpoint setup are capable of spanning the benchmark flyway geometry at all
+- whether the semi-transparent wide-line plots and the point-density heatmap reveal concentrated corridor use or a much more diffuse route field across the Atlantic domain
 
 ## Next step
 Use this full bounded route set as the candidate pool for the first explicit route-to-benchmark comparison against the Svalbard spring 10-degree mean flyway.
