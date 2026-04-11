@@ -11,7 +11,7 @@
 4. Is the current H3 environmental assignment method still sufficient for the first routing prototype, or do the new component maps suggest any need for refinement?
 5. Has directional distance anisotropy in the H3 graph started to bias Dijkstra route geometry when distance weights are high, or does it remain a minor effect?
 6. How should we interpret the diagnostic northward component maps versus the true edge-based routing quantities when presenting the method?
-7. How should we handle large processed files in the repo if edge-level tables continue to grow beyond comfortable normal-git size?
+7. After the new efficiency rule, which upcoming steps should be split cleanly into simulation, reporting, and evaluation scripts to avoid unnecessary reruns?
 
 ## Distance red flag
 
