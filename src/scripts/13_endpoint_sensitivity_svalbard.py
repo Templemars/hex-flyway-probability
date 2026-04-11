@@ -24,6 +24,9 @@ REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "13_endpoint-sensitivity-sv
 
 REFERENCE_START = "83eea8fffffffff"
 REFERENCE_END = "83076bfffffffff"
+RANDOM_SEED = 42
+N_RANDOM_STARTS = 8
+N_RANDOM_ENDS = 8
 WEIGHT_SETS = [
     ("support_only", 1.0, 0.0, 0.0, 0.0),
     ("crosswind_only", 0.0, 1.0, 0.0, 0.0),
@@ -88,8 +91,13 @@ def main() -> None:
     water_cells = set(env.loc[env["has_wind_support"], "h3_cell"].astype(str))
     df = df[df["source_h3"].astype(str).isin(water_cells) & df["target_h3"].astype(str).isin(water_cells)].copy()
 
-    start_candidates = sorted(h3.grid_disk(REFERENCE_START, 1))
-    end_candidates = sorted(h3.grid_disk(REFERENCE_END, 1))
+    rng = np.random.default_rng(RANDOM_SEED)
+    start_pool = sorted(h3.grid_disk(REFERENCE_START, 2))
+    end_pool = sorted(h3.grid_disk(REFERENCE_END, 2))
+    random_starts = rng.choice([cell for cell in start_pool if cell != REFERENCE_START], size=min(N_RANDOM_STARTS, max(len(start_pool) - 1, 0)), replace=False).tolist()
+    random_ends = rng.choice([cell for cell in end_pool if cell != REFERENCE_END], size=min(N_RANDOM_ENDS, max(len(end_pool) - 1, 0)), replace=False).tolist()
+    start_candidates = [REFERENCE_START] + sorted(random_starts)
+    end_candidates = [REFERENCE_END] + sorted(random_ends)
 
     endpoint_rows = []
     coord_rows = []
@@ -190,8 +198,9 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 - reference start cell: `{REFERENCE_START}`
 - reference end cell: `{REFERENCE_END}`
 - tested behaviors: `support_only`, `crosswind_only`, `distance_only`, `food_only`
-- tested start cells: reference cell plus its H3 k=1 neighborhood
-- tested end cells: reference cell plus its H3 k=1 neighborhood
+- tested start cells: reference cell plus randomly sampled cells from its H3 k=2 neighborhood
+- tested end cells: reference cell plus randomly sampled cells from its H3 k=2 neighborhood
+- random seed: `{RANDOM_SEED}`
 - output route table kept intentionally compact, with coordinates only
 
 ## Outputs
@@ -199,9 +208,19 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 - tested endpoint pairs: `results/tables/13_svalbard_endpoint_sensitivity_endpoints.csv`
 - overlay figure: `results/figures/13_svalbard_endpoint_sensitivity_routes.png`
 
-## Quick-look figure
+## Quick-look maps
 
-![Endpoint sensitivity over four background cost maps](../figures/13_svalbard_endpoint_sensitivity_routes.png)
+### Support map
+![Endpoint sensitivity over four background cost maps, support panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
+
+### Crosswind map
+![Endpoint sensitivity over four background cost maps, crosswind panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
+
+### Distance map
+![Endpoint sensitivity over four background cost maps, distance panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
+
+### Food map
+![Endpoint sensitivity over four background cost maps, food panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
 
 ## Map styling
 - reference least-cost path shown in **red**
