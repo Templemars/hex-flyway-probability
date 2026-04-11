@@ -23,7 +23,7 @@ ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.
 OUTPUT_RMSE_PATH = PROJECT_ROOT / "results" / "tables" / "16_svalbard_full_bounded_rmse.csv"
 OUTPUT_BAND_PATH = PROJECT_ROOT / "results" / "tables" / "16_svalbard_full_bounded_route_band_summaries.csv"
 FIGURE_TOP_PATH = PROJECT_ROOT / "results" / "figures" / "16_svalbard_top_rmse_routes.png"
-FIGURE_BENCHMARK_PATH = PROJECT_ROOT / "results" / "figures" / "16_svalbard_top_rmse_vs_benchmark.png"
+FIGURE_COEFF_PATH = PROJECT_ROOT / "results" / "figures" / "16_svalbard_top_rmse_coefficient_boxplots.png"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "16_evaluate-full-bounded-rmse.md"
 
 
@@ -111,13 +111,18 @@ def main() -> None:
     fig.savefig(FIGURE_TOP_PATH, dpi=170)
     plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(7.4, 8.8), constrained_layout=True)
-    plot_rows = top.head(8).copy().iloc[::-1]
-    ax.barh(plot_rows["behavior"], plot_rows["rmse_lon_deg"], color="#4c78a8")
-    ax.set_title("Lowest RMSE behaviors, Svalbard spring")
-    ax.set_xlabel("RMSE of median longitude by 10° latitude band")
-    ax.set_ylabel("Behavior")
-    fig.savefig(FIGURE_BENCHMARK_PATH, dpi=170)
+    top20 = rmse_df.head(20).copy()
+    coeff_data = [top20["a_wind"], top20["b_crosswind"], top20["c_distance"], top20["d_food"]]
+    fig, ax = plt.subplots(figsize=(7.6, 6.8), constrained_layout=True)
+    box = ax.boxplot(coeff_data, patch_artist=True, labels=["a_wind", "b_crosswind", "c_distance", "d_food"])
+    colors = ["#4c78a8", "#72b7b2", "#f58518", "#54a24b"]
+    for patch, color in zip(box["boxes"], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.75)
+    ax.set_title("Coefficient distributions among top 20 lowest-RMSE behaviors")
+    ax.set_ylabel("Coefficient value")
+    ax.set_ylim(0, 1)
+    fig.savefig(FIGURE_COEFF_PATH, dpi=170)
     plt.close(fig)
 
     best = rmse_df.iloc[0]
@@ -145,13 +150,13 @@ This matches the benchmark-comparison logic much more closely than ranking by in
 - RMSE table: `results/tables/16_svalbard_full_bounded_rmse.csv`
 - per-band route summaries: `results/tables/16_svalbard_full_bounded_route_band_summaries.csv`
 - top-route map: `results/figures/16_svalbard_top_rmse_routes.png`
-- lowest-RMSE bar chart: `results/figures/16_svalbard_top_rmse_vs_benchmark.png`
+- coefficient boxplots for top 20 RMSE behaviors: `results/figures/16_svalbard_top_rmse_coefficient_boxplots.png`
 
 ## Quick-look figures
 
 ![Top RMSE routes versus benchmark](../figures/16_svalbard_top_rmse_routes.png)
 
-![Lowest RMSE behaviors](../figures/16_svalbard_top_rmse_vs_benchmark.png)
+![Coefficient boxplots among top 20 RMSE behaviors](../figures/16_svalbard_top_rmse_coefficient_boxplots.png)
 
 ## Main result
 - lowest-RMSE behavior: **{best['behavior']}**
@@ -166,6 +171,7 @@ That makes this step much more meaningful than any earlier ranking by internal p
 
 The most important things to inspect next are:
 - whether the lowest-RMSE behaviors cluster in a recognizable region of coefficient space
+- whether the coefficient boxplots show clear concentration or broad spread for wind, crosswind, distance, and food among the top 20 behaviors
 - whether the top routes converge on a coherent flyway shape or remain quite different despite similar RMSE values
 - whether the top-ranked routes also look biologically reasonable when plotted, rather than only numerically favorable under the benchmark summary metric
 

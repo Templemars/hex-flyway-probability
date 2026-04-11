@@ -22,13 +22,13 @@ This matches the benchmark-comparison logic much more closely than ranking by in
 - RMSE table: `results/tables/16_svalbard_full_bounded_rmse.csv`
 - per-band route summaries: `results/tables/16_svalbard_full_bounded_route_band_summaries.csv`
 - top-route map: `results/figures/16_svalbard_top_rmse_routes.png`
-- lowest-RMSE bar chart: `results/figures/16_svalbard_top_rmse_vs_benchmark.png`
+- coefficient boxplots for top 20 RMSE behaviors: `results/figures/16_svalbard_top_rmse_coefficient_boxplots.png`
 
 ## Quick-look figures
 
 ![Top RMSE routes versus benchmark](../figures/16_svalbard_top_rmse_routes.png)
 
-![Lowest RMSE behaviors](../figures/16_svalbard_top_rmse_vs_benchmark.png)
+![Coefficient boxplots among top 20 RMSE behaviors](../figures/16_svalbard_top_rmse_coefficient_boxplots.png)
 
 ## Main result
 - lowest-RMSE behavior: **behavior_208**
@@ -43,6 +43,7 @@ That makes this step much more meaningful than any earlier ranking by internal p
 
 The most important things to inspect next are:
 - whether the lowest-RMSE behaviors cluster in a recognizable region of coefficient space
+- whether the coefficient boxplots show clear concentration or broad spread for wind, crosswind, distance, and food among the top 20 behaviors
 - whether the top routes converge on a coherent flyway shape or remain quite different despite similar RMSE values
 - whether the top-ranked routes also look biologically reasonable when plotted, rather than only numerically favorable under the benchmark summary metric
 
