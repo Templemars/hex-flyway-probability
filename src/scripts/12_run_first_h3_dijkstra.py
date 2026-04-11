@@ -162,7 +162,7 @@ def draw_component_map_panel(
         c=df[value_col],
         s=65,
         marker="h",
-        cmap="RdYlGn_r",
+        cmap="viridis",
         linewidths=0,
         alpha=0.9,
         vmin=vmin,

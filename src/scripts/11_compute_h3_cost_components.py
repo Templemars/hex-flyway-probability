@@ -164,7 +164,8 @@ def main() -> None:
     p99_windsupport = percentile_99(windsupport)
     parallel_wind_cost_raw = np.abs(windsupport - p99_windsupport)
     crosswind_raw = np.abs(df["source_u10"] * move_north - df["source_v10"] * move_east)
-    distance_cost_raw = df["edge_distance_km"]
+    typical_edge_distance_km = percentile_50(df["edge_distance_km"])
+    distance_cost_raw = (df["edge_distance_km"] - typical_edge_distance_km).clip(lower=0.0)
     food_cost_raw = compute_food_cost(df["source_chlor_a"])
 
     out = df.copy()
@@ -261,7 +262,8 @@ def main() -> None:
     env_map["food_cost_raw"] = compute_food_cost(env_map["chlor_a"])
     env_map["parallel_wind_cost_northward_std"] = standardize_to_100(env_map["parallel_wind_cost_northward_raw"])
     env_map["crosswind_cost_northward_std"] = standardize_to_100(env_map["crosswind_cost_northward_raw"])
-    env_map["distance_cost_std"] = standardize_to_100(env_map["northward_edge_distance_km"].fillna(0.0))
+    env_map["distance_cost_raw"] = (env_map["northward_edge_distance_km"] - typical_edge_distance_km).clip(lower=0.0)
+    env_map["distance_cost_std"] = standardize_to_100(env_map["distance_cost_raw"].fillna(0.0))
     env_map["food_cost_std"] = standardize_to_100(env_map["food_cost_raw"])
 
     for col in [
@@ -358,7 +360,7 @@ Audit values:
 - shared map color scale maximum (P99 cap across displayed map layers): **{map_max:.3f} SCU**
 
 ## Method
-- compute directional edge costs for parallel wind, crosswind, true distance, and food
+- compute directional edge costs for parallel wind, crosswind, extra edge distance relative to a typical neighbor step, and food
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
@@ -372,8 +374,8 @@ Audit values:
 - wind support is the projection of the source wind vector onto the movement direction
 - raw parallel wind cost = distance from `P99(windsupport)`
 - raw crosswind cost = magnitude of the wind component perpendicular to movement
-- raw distance cost = true H3 edge distance in km for the edge table
-- diagnostic distance map = true distance of the outgoing edge whose bearing is closest to north, one value per source cell
+- raw distance cost = extra H3 edge distance beyond the median H3 neighbor-step distance, floored at zero
+- diagnostic distance map = extra distance of the outgoing edge whose bearing is closest to north, relative to the same median step length
 - raw food cost = `|log(chla) + 1|` after capping high-productivity cells and flooring non-positive chlorophyll values for numerical stability
 - standardized component cost = `100 * raw_component / P99(raw_component)`
 
@@ -412,6 +414,8 @@ Audit values:
 ## Interpretation
 This step now does what it should scientifically: it creates an explicit directional cost graph while keeping the food surface behavior consistent with the published logic that poor-food cells must be expensive.
 
+The main methodological refinement in this version is the distance term. The first H3 implementation used raw edge length scaled directly to the P99, which made most H3 edges cluster close to the upper standardized range because neighbor distances at one H3 resolution are fairly similar. The revised formulation is more defensible: it treats a typical median H3 neighbor step as the zero-baseline distance cost and penalizes only the extra distance beyond that baseline.
+
 The four maps are also useful because they separate two different views of the model:
 - edge-level directional costs used in the real path calculations
 - cell-level component surfaces used for intuitive inspection
@@ -424,11 +428,12 @@ The pole issue in the earlier food map was not something I was happy with. It mi
 The directional distance diagnostic helps interpret the odd blue corridor patterns in the northward distance map. Those patterns are partly a consequence of selecting a single outgoing edge per cell for display, but the bearing-by-latitude summary lets us check whether there is also real directional variation in edge distances in the H3 graph.
 
 ## Points to watch
-- the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
-- the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
+- the distance component in the routing model now represents extra H3 edge length relative to a typical median neighbor step, which is an intentional refinement relative to the legacy constant-per-step distance term
+- the mapped northward distance surface is a separate diagnostic layer for interpretability, based on the extra length of a real outgoing northward edge per cell relative to the same baseline
 - the common wind-footprint mask is a visualization choice for consistency and honesty across maps, not yet a modeling exclusion rule
 - the shared P99-capped color scale makes map-to-map magnitude comparisons easier while preserving more contrast than a raw-maximum scale
 - if the directional distance summary shows strong systematic bearing effects, we should keep that in mind when interpreting later Dijkstra behavior
+- the median H3 neighbor-step baseline used for the revised distance term is **{typical_edge_distance_km:.3f} km**
 - the legacy constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 

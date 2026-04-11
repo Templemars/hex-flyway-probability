@@ -105,7 +105,7 @@ This means the present run is most useful for exposing model behavior and failur
 Inspect the successful and failed single-factor runs explicitly, then decide whether to refine the endpoint definition, modify the tested behavior set, or adjust the cost setup before moving further into comparison against the benchmark flyway.
 
 Additional route summary:
-- best current prototype by total cost: **food_only**
-- best prototype total cost: **1308.804**
-- best prototype total distance: **24460.9 km**
-- best prototype step count: **205**
+- best current prototype by total cost: **distance_only**
+- best prototype total cost: **466.298**
+- best prototype total distance: **23647.8 km**
+- best prototype step count: **199**
