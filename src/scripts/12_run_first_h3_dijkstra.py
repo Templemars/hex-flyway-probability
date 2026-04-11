@@ -146,6 +146,36 @@ def summarize_path(graph: nx.DiGraph, path: list[str], label: str) -> tuple[list
     return path_rows, summary
 
 
+def draw_component_map_panel(
+    ax: plt.Axes,
+    df: pd.DataFrame,
+    value_col: str,
+    masked_df: pd.DataFrame,
+    title: str,
+    vmin: float,
+    vmax: float,
+):
+    ax.scatter(masked_df["lon"], masked_df["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
+    sc = ax.scatter(
+        df["lon"],
+        df["lat"],
+        c=df[value_col],
+        s=65,
+        marker="h",
+        cmap="viridis",
+        linewidths=0,
+        alpha=0.9,
+        vmin=vmin,
+        vmax=vmax,
+    )
+    ax.set_title(title)
+    ax.set_xlabel("Longitude (degrees)")
+    ax.set_ylabel("Latitude (degrees)")
+    ax.set_xlim(-95, 35)
+    ax.set_ylim(-80, 85)
+    return sc
+
+
 def main() -> None:
     df = pd.read_csv(COMPONENT_PATH)
     env = pd.read_csv(ENV_PATH)
@@ -245,34 +275,25 @@ def main() -> None:
         "distance_only": ("d_cost", "Distance cost background with distance-only LCP"),
         "food_only": ("f_cost", "Food cost background with food-only LCP"),
     }
-    cell_background = df.groupby("source_h3", as_index=False)[["source_lon", "source_lat", "w_cost", "c_cost", "d_cost", "f_cost"]].first()
-    shared_overlay_max = float(np.nanpercentile(cell_background[["w_cost", "c_cost", "d_cost", "f_cost"]].to_numpy(), 99))
+
+    map_env = env.loc[env["has_wind_support"], ["h3_cell", "lon", "lat", "u10", "v10", "chlor_a"]].copy()
+    northward_support = map_env["v10"]
+    map_env["w_cost"] = 100.0 * np.abs(northward_support - np.nanpercentile(northward_support.to_numpy(), 99)) / np.nanpercentile(np.abs(northward_support - np.nanpercentile(northward_support.to_numpy(), 99)), 99)
+    map_env["c_cost"] = 100.0 * np.abs(map_env["u10"]) / np.nanpercentile(np.abs(map_env["u10"]).to_numpy(), 99)
+    northward_distance_lookup = df.groupby("source_h3", as_index=False)["d_cost"].first()
+    map_env = map_env.merge(northward_distance_lookup, left_on="h3_cell", right_on="source_h3", how="left")
+    map_env["f_cost"] = 100.0 * np.abs(np.where(np.log(map_env["chlor_a"].clip(lower=map_env.loc[map_env["chlor_a"] > 0, "chlor_a"].min())) <= -1, np.log(map_env["chlor_a"].clip(lower=map_env.loc[map_env["chlor_a"] > 0, "chlor_a"].min())), -1) + 1) / np.nanpercentile(np.abs(np.where(np.log(map_env["chlor_a"].clip(lower=map_env.loc[map_env["chlor_a"] > 0, "chlor_a"].min())) <= -1, np.log(map_env["chlor_a"].clip(lower=map_env.loc[map_env["chlor_a"] > 0, "chlor_a"].min())), -1) + 1), 99)
+    shared_overlay_max = float(np.nanpercentile(map_env[["w_cost", "c_cost", "d_cost", "f_cost"]].to_numpy(), 99))
+
     fig, axes = plt.subplots(2, 2, figsize=(11, 13), constrained_layout=True)
     for ax, behavior in zip(axes.ravel(), ["support_only", "crosswind_only", "distance_only", "food_only"]):
         value_col, title = background_cols[behavior]
-        ax.scatter(masked["lon"], masked["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
-        sc = ax.scatter(
-            cell_background["source_lon"],
-            cell_background["source_lat"],
-            c=cell_background[value_col],
-            s=55,
-            marker="h",
-            cmap="viridis",
-            linewidths=0,
-            alpha=0.9,
-            vmin=0.0,
-            vmax=shared_overlay_max,
-        )
+        sc = draw_component_map_panel(ax, map_env, value_col, masked, title, 0.0, shared_overlay_max)
         route = path_df[path_df["behavior"] == behavior]
         if not route.empty:
             lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
             lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
             ax.plot(lons, lats, color="crimson", linewidth=2.0)
-        ax.set_title(title)
-        ax.set_xlabel("Longitude (degrees)")
-        ax.set_ylabel("Latitude (degrees)")
-        ax.set_xlim(-95, 35)
-        ax.set_ylim(-80, 85)
         cbar = fig.colorbar(sc, ax=ax)
         cbar.set_label(f"Standardized cost (SCU), shared scale 0 to {shared_overlay_max:.1f}")
     fig.savefig(OVERLAY_FIGURE_PATH, dpi=170)
