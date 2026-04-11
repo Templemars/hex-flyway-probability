@@ -22,4 +22,12 @@ venv/
 *.swp
 *.bak
 
+# Data policy
+# Keep small benchmark/raw reference inputs in git for now.
+# Ignore reproducible processed data products and route outputs.
+data/processed/**
+!data/processed/.gitkeep
+!data/processed/**/
+!data/processed/**/.gitkeep
+
 # Large derived artifacts can be tracked selectively later
