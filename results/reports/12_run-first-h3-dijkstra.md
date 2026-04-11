@@ -54,6 +54,7 @@ See:
 - weight table: `results/tables/12_svalbard_dijkstra_weight_sets.csv`
 - endpoint table: `results/tables/12_svalbard_dijkstra_endpoints.csv`
 - route figure: `results/figures/12_svalbard_dijkstra_routes.png`
+- diagnostic overlay figure: `results/figures/12_component_maps_with_lcps.png`
 
 Map framing:
 - the route figure is focused on the Atlantic domain
@@ -63,6 +64,19 @@ Map framing:
 ## Quick-look figure
 
 ![First H3 Dijkstra prototype routes](../figures/12_svalbard_dijkstra_routes.png)
+
+![Diagnostic component maps with corresponding least-cost paths](../figures/12_component_maps_with_lcps.png)
+
+## Why the overlay figure is useful, and its limit
+The overlay figure is scientifically useful as a **diagnostic comparison**.
+It helps us check whether each single-factor route is moving through visually low-cost regions of the corresponding component background.
+
+However, it should not be interpreted too literally as the exact optimization surface used by Dijkstra, because:
+- the real routing is done on the directed edge graph
+- the background panels are cell-level diagnostic surfaces
+- the wind backgrounds are simplified visualization surfaces rather than the full edge-based object
+
+So this figure is appropriate for interpretation, but it remains a diagnostic comparison rather than a perfect one-to-one representation of the graph optimization problem.
 
 ## Run status summary
 - number of tested behaviors: **4**

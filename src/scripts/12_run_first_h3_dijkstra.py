@@ -30,6 +30,7 @@ OUTPUT_SUMMARY_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstr
 OUTPUT_WEIGHTS_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstra_weight_sets.csv"
 OUTPUT_ENDPOINTS_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstra_endpoints.csv"
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "12_svalbard_dijkstra_routes.png"
+OVERLAY_FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "12_component_maps_with_lcps.png"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "12_run-first-h3-dijkstra.md"
 
 
@@ -237,6 +238,32 @@ def main() -> None:
     fig.savefig(FIGURE_PATH, dpi=170)
     plt.close(fig)
 
+    # Diagnostic component maps with corresponding single-factor least-cost paths overlaid.
+    background_cols = {
+        "support_only": ("w_cost", "Support cost background with support-only LCP"),
+        "crosswind_only": ("c_cost", "Crosswind cost background with crosswind-only LCP"),
+        "distance_only": ("d_cost", "Distance cost background with distance-only LCP"),
+        "food_only": ("f_cost", "Food cost background with food-only LCP"),
+    }
+    cell_background = df.groupby("source_h3", as_index=False)[["source_lon", "source_lat", "w_cost", "c_cost", "d_cost", "f_cost"]].first()
+    fig, axes = plt.subplots(2, 2, figsize=(11, 13), constrained_layout=True)
+    for ax, behavior in zip(axes.ravel(), ["support_only", "crosswind_only", "distance_only", "food_only"]):
+        value_col, title = background_cols[behavior]
+        ax.scatter(masked["lon"], masked["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
+        ax.scatter(cell_background["source_lon"], cell_background["source_lat"], c=cell_background[value_col], s=55, marker="h", cmap="viridis", linewidths=0, alpha=0.9)
+        route = path_df[path_df["behavior"] == behavior]
+        if not route.empty:
+            lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
+            lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
+            ax.plot(lons, lats, color="crimson", linewidth=2.0)
+        ax.set_title(title)
+        ax.set_xlabel("Longitude (degrees)")
+        ax.set_ylabel("Latitude (degrees)")
+        ax.set_xlim(-95, 35)
+        ax.set_ylim(-80, 85)
+    fig.savefig(OVERLAY_FIGURE_PATH, dpi=170)
+    plt.close(fig)
+
     best = summary_df.iloc[0] if not summary_df.empty else None
     report = f'''# Run first H3 Dijkstra prototype
 
@@ -294,6 +321,7 @@ See:
 - weight table: `results/tables/12_svalbard_dijkstra_weight_sets.csv`
 - endpoint table: `results/tables/12_svalbard_dijkstra_endpoints.csv`
 - route figure: `results/figures/12_svalbard_dijkstra_routes.png`
+- diagnostic overlay figure: `results/figures/12_component_maps_with_lcps.png`
 
 Map framing:
 - the route figure is focused on the Atlantic domain
@@ -303,6 +331,19 @@ Map framing:
 ## Quick-look figure
 
 ![First H3 Dijkstra prototype routes](../figures/12_svalbard_dijkstra_routes.png)
+
+![Diagnostic component maps with corresponding least-cost paths](../figures/12_component_maps_with_lcps.png)
+
+## Why the overlay figure is useful, and its limit
+The overlay figure is scientifically useful as a **diagnostic comparison**.
+It helps us check whether each single-factor route is moving through visually low-cost regions of the corresponding component background.
+
+However, it should not be interpreted too literally as the exact optimization surface used by Dijkstra, because:
+- the real routing is done on the directed edge graph
+- the background panels are cell-level diagnostic surfaces
+- the wind backgrounds are simplified visualization surfaces rather than the full edge-based object
+
+So this figure is appropriate for interpretation, but it remains a diagnostic comparison rather than a perfect one-to-one representation of the graph optimization problem.
 
 ## Run status summary
 - number of tested behaviors: **{len(weights_df)}**
