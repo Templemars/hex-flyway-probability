@@ -95,10 +95,22 @@ def draw_component_map(
     output_path: Path,
     title: str,
     colorbar_label: str,
+    vmin: float,
+    vmax: float,
     cmap: str = "viridis",
 ) -> None:
     fig, ax = plt.subplots(figsize=(11, 6.5), constrained_layout=True)
-    sc = ax.scatter(df["lon"], df["lat"], c=df[value_col], s=10, cmap=cmap, linewidths=0)
+    plot_df = df.dropna(subset=[value_col]).copy()
+    sc = ax.scatter(
+        plot_df["lon"],
+        plot_df["lat"],
+        c=plot_df[value_col],
+        s=10,
+        cmap=cmap,
+        linewidths=0,
+        vmin=vmin,
+        vmax=vmax,
+    )
     ax.set_title(title)
     ax.set_xlabel("Longitude (degrees)")
     ax.set_ylabel("Latitude (degrees)")
@@ -200,11 +212,12 @@ def main() -> None:
     fig.savefig(SCATTER_PATH, dpi=150)
     plt.close(fig)
 
-    # Component maps at cell level. For wind maps, use a straight northward heading.
+    # Component maps at cell level. For visualization, use the wind footprint as the support mask.
     northward_support = env["v10"]
     northward_parallel_raw = np.abs(northward_support - percentile_99(northward_support))
     northward_crosswind_raw = np.abs(env["u10"])
     env_map = env[["h3_cell", "lon", "lat", "u10", "v10", "chlor_a"]].copy()
+    env_map["has_wind_support"] = ~(env_map[["u10", "v10"]].isna().all(axis=1))
     env_map["parallel_wind_cost_northward_raw"] = northward_parallel_raw
     env_map["crosswind_cost_northward_raw"] = northward_crosswind_raw
     northward_edge_distance = select_northward_edge_distance(out)
@@ -220,38 +233,68 @@ def main() -> None:
     env_map["distance_cost_std"] = standardize_to_100(env_map["northward_edge_distance_km"].fillna(0.0))
     env_map["food_cost_std"] = standardize_to_100(env_map["food_cost_raw"])
 
+    for col in [
+        "parallel_wind_cost_northward_std",
+        "crosswind_cost_northward_std",
+        "distance_cost_std",
+        "food_cost_std",
+    ]:
+        env_map.loc[~env_map["has_wind_support"], col] = np.nan
+
+    map_max = float(
+        np.nanmax(
+            env_map[
+                [
+                    "parallel_wind_cost_northward_std",
+                    "crosswind_cost_northward_std",
+                    "distance_cost_std",
+                    "food_cost_std",
+                ]
+            ].to_numpy()
+        )
+    )
+
     draw_component_map(
         env_map,
         "parallel_wind_cost_northward_std",
         MAP_WIND_PATH,
         "Parallel wind cost surface for straight northward flight",
-        "Standardized cost (0-100 SCU)",
+        f"Standardized cost (SCU), shared scale 0 to {map_max:.1f}",
+        0.0,
+        map_max,
     )
     draw_component_map(
         env_map,
         "crosswind_cost_northward_std",
         MAP_CROSSWIND_PATH,
         "Crosswind cost surface for straight northward flight",
-        "Standardized cost (0-100 SCU)",
+        f"Standardized cost (SCU), shared scale 0 to {map_max:.1f}",
+        0.0,
+        map_max,
     )
     draw_component_map(
         env_map,
         "distance_cost_std",
         MAP_DISTANCE_PATH,
         "Distance cost surface from outgoing edge closest to north",
-        "Standardized cost (0-100 SCU), based on edge distance in km",
+        f"Standardized cost (SCU), shared scale 0 to {map_max:.1f}",
+        0.0,
+        map_max,
     )
     draw_component_map(
         env_map,
         "food_cost_std",
         MAP_FOOD_PATH,
         "Food cost surface from chlorophyll-a",
-        "Standardized cost (0-100 SCU)",
+        f"Standardized cost (SCU), shared scale 0 to {map_max:.1f}",
+        0.0,
+        map_max,
     )
 
     legacy_ref = out["legacy_constant_distance_reference"].iloc[0]
     zero_chla_count = int((env["chlor_a"] <= 0).sum())
     positive_floor = float(env.loc[env["chlor_a"] > 0, "chlor_a"].min()) if (env["chlor_a"] > 0).any() else 1e-6
+    missing_support_count = int((~env_map["has_wind_support"]).sum())
     report = f'''# Compute H3 cost components
 
 ## Question
@@ -279,6 +322,8 @@ The corrected implementation now:
 Audit values:
 - zero or non-positive chlorophyll cells in H3 table: **{zero_chla_count}**
 - positive chlorophyll floor used for the log transform: **{positive_floor:.8f}**
+- cells outside the common wind-supported map footprint: **{missing_support_count}**
+- shared map color scale maximum: **{map_max:.3f} SCU**
 
 ## Method
 - compute directional edge costs for parallel wind, crosswind, true distance, and food
@@ -286,6 +331,8 @@ Audit values:
 - additionally produce four cell-level component maps for transparency
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
 - for the distance map, assign to each cell the true distance of the outgoing edge whose bearing is closest to north
+- for visualization only, use the wind-data footprint as a common support mask across all four maps so unsupported cells are not mistaken for valid low or high costs
+- apply one shared color scale across all four maps, starting at 0 and ending at the maximum standardized cost present among the displayed map layers
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -336,9 +383,13 @@ The four maps are also useful because they separate two different views of the m
 For the wind maps, the northward-flight assumption is only for visualizing the directional wind components as a global surface. The real graph still uses each actual edge bearing.
 For the distance map, each cell is assigned the true distance of its outgoing edge closest to north. This is also diagnostic rather than part of the routing graph itself, but it is a real edge quantity rather than an artificial cumulative construction.
 
+The pole issue in the earlier food map was not something I was happy with. It mixed genuinely poor-food cells with cells that simply lie outside the shared environmental support. Using the wind footprint as a visualization mask is the right fix for the maps, because it prevents unsupported cells from being visually interpreted as real food-cost values.
+
 ## Points to watch
 - the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
 - the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
+- the common wind-footprint mask is a visualization choice for consistency and honesty across maps, not yet a modeling exclusion rule
+- the shared color scale makes map-to-map magnitude comparisons easier, but it also compresses contrast in components whose ranges are naturally narrower; that tradeoff is worth it here because you explicitly want comparability
 - the legacy constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 
