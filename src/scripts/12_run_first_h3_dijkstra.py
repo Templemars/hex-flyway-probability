@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -24,6 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPONENT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_components_res3.csv"
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
 SS_BENCHMARK_PATH = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025" / "gdf_SS_10.csv"
+LAND_PATH = PROJECT_ROOT / ".venv" / "lib" / "python3.12" / "site-packages" / "pyogrio" / "tests" / "fixtures" / "naturalearth_lowres" / "naturalearth_lowres.shp"
 
 OUTPUT_ROUTE_PATH = PROJECT_ROOT / "data" / "processed" / "routes" / "h3_dijkstra_svalbard_spring_paths.csv"
 OUTPUT_SUMMARY_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstra_summary.csv"
@@ -34,16 +36,10 @@ REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "12_run-first-h3-dijkstra.m
 
 
 WEIGHT_SETS = [
-    ("wind_only", 1.0, 0.0, 0.0, 0.0),
+    ("support_only", 1.0, 0.0, 0.0, 0.0),
+    ("crosswind_only", 0.0, 1.0, 0.0, 0.0),
     ("distance_only", 0.0, 0.0, 1.0, 0.0),
-    ("wind_distance", 0.5, 0.0, 0.5, 0.0),
-    ("wind_food", 0.5, 0.0, 0.0, 0.5),
-    ("distance_food", 0.0, 0.0, 0.5, 0.5),
-    ("wind_dominated", 0.7, 0.0, 0.3, 0.0),
-    ("distance_food_leaning", 0.3, 0.0, 0.5, 0.2),
-    ("wind_crosswind", 0.7, 0.1, 0.2, 0.0),
-    ("balanced", 0.4, 0.1, 0.3, 0.2),
-    ("crosswind_mix", 0.5, 0.2, 0.3, 0.0),
+    ("food_only", 0.0, 0.0, 0.0, 1.0),
 ]
 
 
@@ -156,6 +152,15 @@ def main() -> None:
     env = pd.read_csv(ENV_PATH)
     benchmark = pd.read_csv(SS_BENCHMARK_PATH)
 
+    # Land mask, following the 2025 paper's overwater-only modeling stance.
+    world = gpd.read_file(LAND_PATH)
+    land = world.to_crs(4326)
+    env_gdf = gpd.GeoDataFrame(env.copy(), geometry=gpd.points_from_xy(env["lon"], env["lat"]), crs=4326)
+    on_land = gpd.sjoin(env_gdf, land[["geometry"]], how="left", predicate="within")
+    env["is_land"] = on_land["index_right"].notna().to_numpy()
+    water_cells = set(env.loc[~env["is_land"], "h3_cell"].astype(str))
+    df = df[df["source_h3"].astype(str).isin(water_cells) & df["target_h3"].astype(str).isin(water_cells)].copy()
+
     start_record, end_record = derive_prototype_endpoints(benchmark, env, n_points=3)
     start_cell = start_record["nearest_h3_cell"]
     end_cell = end_record["nearest_h3_cell"]
@@ -212,8 +217,9 @@ def main() -> None:
         failed_df.to_csv(OUTPUT_SUMMARY_PATH.with_name('12_svalbard_dijkstra_failures.csv'), index=False)
 
     fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
-    sampled_background = env.iloc[::20]
-    ax.scatter(sampled_background["lon"], sampled_background["lat"], s=2, color="lightgray", alpha=0.4)
+    land.plot(ax=ax, color="#d9c2a3", edgecolor="none", alpha=0.9)
+    water_background = env.loc[~env["is_land"]].iloc[::20]
+    ax.scatter(water_background["lon"], water_background["lat"], s=2, color="#dceaf7", alpha=0.35)
     successful_behaviors = list(summary_df["behavior"]) if not summary_df.empty else []
     colors = plt.cm.tab10(np.linspace(0, 1, max(len(successful_behaviors), 1)))
     for color, behavior in zip(colors, successful_behaviors):
@@ -244,14 +250,31 @@ What do the first Svalbard spring Dijkstra routes look like across the agreed pr
 - `data/raw/benchmark_from_2025/gdf_SS_10.csv`
 
 ## Behavior set used
-The already agreed prototype behavior subset was used, with coefficient order:
-- `a = wind`
+This first extreme-behavior batch uses only four single-factor cases, with coefficient order:
+- `a = wind support`
 - `b = crosswind`
 - `c = distance`
 - `d = food`
 
+The tested extreme behaviors are:
+- support only
+- crosswind only
+- distance only
+- food only
+
 See:
 - `results/tables/12_svalbard_dijkstra_weight_sets.csv`
+
+## Land masking used
+Following the 2025 paper's Methods, land cells were excluded from the routing domain.
+
+Implementation here:
+- classify H3 cell centroids against a global land polygon dataset
+- treat cells whose centroids fall on land as land cells
+- remove any edge whose source or target cell is classified as land
+- show land in a distinct color on the global route map
+
+This remains a pragmatic first land mask and may later be refined if coastlines or narrow passages require more careful handling.
 
 ## Prototype endpoint rule used
 This first Dijkstra test uses a temporary transparent endpoint rule rather than a claimed final biological endpoint definition.
@@ -282,7 +305,7 @@ See:
 - failed route runs: **{0 if failed_df.empty else len(failed_df)}**
 
 ## Interpretation
-This is the first end-to-end H3 route prototype: standardized edge costs are now being turned into actual destination-constrained paths. That is a meaningful transition from cost construction into flyway simulation.
+This is the first end-to-end H3 route prototype with an explicit overwater routing domain: standardized edge costs are now being turned into actual destination-constrained paths. That is a meaningful transition from cost construction into flyway simulation.
 
 The current routes should still be treated as prototype behavior diagnostics, not final biological claims, because:
 - the endpoint rule is still provisional

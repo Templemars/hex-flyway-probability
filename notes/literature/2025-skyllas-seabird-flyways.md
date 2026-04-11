@@ -37,6 +37,13 @@ For flyway evaluation in the 2025 paper:
 
 This is important for the new project because it means any proposed secondary validation metric should not simply duplicate the same latitude-binned longitude comparison already embedded in the RMSE method.
 
+Additional methods details now checked explicitly from the paper:
+- land grid cells were **masked out** in the 2025 model
+- the paper states that, although overland passages can occur, they were treated as exceptions and land was excluded as a first-step simplification while tuning and evaluating the model for wind, food, and distance
+- wind inputs were ERA5 `u10` and `v10`, seasonally averaged and regridded to about 100 km
+- chlorophyll-a was used as an ocean productivity proxy and regridded to the same support
+- route length was evaluated as the sum of great-circle distances between consecutive trajectory points
+
 ## Weighting strategy used in the 2025 paper
 
 The paper used a four-component linear cost formula:

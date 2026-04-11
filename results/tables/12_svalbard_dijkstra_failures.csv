@@ -1,3 +1,4 @@
 behavior,a_wind,b_crosswind,c_distance,d_food,status,error_type,error_message
-wind_only,1.0,0.0,0.0,0.0,failed,ValueError,Contradictory paths found: negative weights?
-wind_crosswind,0.7,0.1,0.2,0.0,failed,ValueError,Contradictory paths found: negative weights?
+support_only,1.0,0.0,0.0,0.0,failed,ValueError,Contradictory paths found: negative weights?
+crosswind_only,0.0,1.0,0.0,0.0,failed,ValueError,Contradictory paths found: negative weights?
+food_only,0.0,0.0,0.0,1.0,failed,ValueError,Contradictory paths found: negative weights?
