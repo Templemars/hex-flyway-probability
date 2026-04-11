@@ -140,6 +140,13 @@ Distance-term refinement:
 - the H3 sequel should instead use **true H3 edge distance** as the distance component
 - this should be described explicitly as an intentional methodological refinement enabled by the graph-based H3 representation
 
+**RED FLAG, revisit later:**
+- although the edge-distance summary suggests only modest directional variation overall, the H3 graph is not perfectly distance-isotropic by bearing and latitude
+- diagnostic northward distance maps can show visible corridor-like structures because they select one outgoing edge per cell
+- this map artifact is stronger than the underlying graph effect, but the underlying effect is real enough that it should not be forgotten
+- before treating distance as fully settled, later project stages should re-check whether directional edge-distance anisotropy biases Dijkstra routes when the distance weight is high
+- if later route behavior looks overly aligned with grid direction, distance handling may need refinement or sensitivity analysis
+
 This means the sequel preserves the old scaling philosophy but improves the geometric treatment of distance.
 
 ## 5. Edge scoring and movement weights

@@ -9,8 +9,25 @@
 ## Scientific design checks
 
 4. Is the current H3 environmental assignment method still sufficient for the first routing prototype, or do the new component maps suggest any need for refinement?
-5. How should we interpret the diagnostic northward component maps versus the true edge-based routing quantities when presenting the method?
-6. How should we handle large processed files in the repo if edge-level tables continue to grow beyond comfortable normal-git size?
+5. Has directional distance anisotropy in the H3 graph started to bias Dijkstra route geometry when distance weights are high, or does it remain a minor effect?
+6. How should we interpret the diagnostic northward component maps versus the true edge-based routing quantities when presenting the method?
+7. How should we handle large processed files in the repo if edge-level tables continue to grow beyond comfortable normal-git size?
+
+## Distance red flag
+
+Keep this explicitly alive:
+- the distance term is usable, but not fully “closed” scientifically
+- diagnostic northward distance maps show stronger corridor patterns than the underlying edge summary alone would suggest
+- revisit distance handling if later routes look grid-directional or overly sensitive to the distance coefficient
+
+## Literature / framing
+
+8. Which literature notes should be revisited next only if they directly affect the first Dijkstra formulation or interpretation?
+
+## Process reminder
+
+This file is a rolling current agenda only.
+Resolved or stale items should be removed rather than accumulated.
 
 ## Literature / framing
 
