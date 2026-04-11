@@ -1,0 +1,11 @@
+behavior,a_wind,b_crosswind,c_distance,d_food
+wind_only,1.0,0.0,0.0,0.0
+distance_only,0.0,0.0,1.0,0.0
+wind_distance,0.5,0.0,0.5,0.0
+wind_food,0.5,0.0,0.0,0.5
+distance_food,0.0,0.0,0.5,0.5
+wind_dominated,0.7,0.0,0.3,0.0
+distance_food_leaning,0.3,0.0,0.5,0.2
+wind_crosswind,0.7,0.1,0.2,0.0
+balanced,0.4,0.1,0.3,0.2
+crosswind_mix,0.5,0.2,0.3,0.0

@@ -20,6 +20,13 @@ Keep this explicitly alive:
 - diagnostic northward distance maps show stronger corridor patterns than the underlying edge summary alone would suggest
 - revisit distance handling if later routes look grid-directional or overly sensitive to the distance coefficient
 
+## Algorithm red flag
+
+Keep this explicitly alive too:
+- the first Dijkstra prototype may use a package implementation for reliability and speed
+- later we may still want a manual Dijkstra implementation for maximal auditability or method-validation purposes
+- revisit this if package behavior becomes limiting or if we want explicit algorithm-comparison documentation
+
 ## Literature / framing
 
 8. Which literature notes should be revisited next only if they directly affect the first Dijkstra formulation or interpretation?

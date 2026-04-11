@@ -1,0 +1,3 @@
+endpoint_role,n_benchmark_points_used,lon,lat,nearest_h3_cell
+start,3,-28.852867103333335,-64.97994995666667,83eedcfffffffff
+end,3,-27.007392518333337,53.52708920833334,8318b6fffffffff
