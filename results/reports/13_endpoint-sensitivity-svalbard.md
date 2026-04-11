@@ -17,19 +17,9 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 - tested endpoint pairs: `results/tables/13_svalbard_endpoint_sensitivity_endpoints.csv`
 - overlay figure: `results/figures/13_svalbard_endpoint_sensitivity_routes.png`
 
-## Quick-look maps
+## Quick-look figure
 
-### Support map
-![Endpoint sensitivity over four background cost maps, support panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
-
-### Crosswind map
-![Endpoint sensitivity over four background cost maps, crosswind panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
-
-### Distance map
-![Endpoint sensitivity over four background cost maps, distance panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
-
-### Food map
-![Endpoint sensitivity over four background cost maps, food panel](../figures/13_svalbard_endpoint_sensitivity_routes.png)
+![Endpoint sensitivity over the four usual background cost maps](../figures/13_svalbard_endpoint_sensitivity_routes.png)
 
 ## Map styling
 - reference least-cost path shown in **red**
@@ -38,3 +28,14 @@ How sensitive are the four current extreme-behavior routes to small changes in s
 
 ## Run summary
 - successful routes across all tested behavior-endpoint combinations: **324**
+
+## Interpretation
+This figure is useful because it asks a focused structural question before we broaden the behavior space: do small changes in endpoint placement materially alter the least-cost routes, or do the routes remain broadly organized by the cost field itself?
+
+The encouraging part is that the sensitivity experiment can now be inspected behavior by behavior on the same four background maps already used in the main prototype report. That makes it much easier to judge whether endpoint perturbations produce only local spreading near the termini or whether they reorganize the trans-Atlantic route geometry more fundamentally.
+
+The key thing to look for here is not whether every grey line sits exactly on the red line. Some divergence is expected. The important question is whether each behavior preserves a recognizable corridor structure under moderate endpoint perturbation, or whether the route geometry fragments substantially when the start and end cells are nudged within a wider local neighborhood.
+
+If the grey bundles remain fairly coherent around the red reference path for a behavior, that behavior looks more robust to endpoint choice. If the bundle fans out widely or switches corridor entirely, that behavior is more endpoint-sensitive and should be interpreted more cautiously in later comparisons.
+
+So this step should be read as a diagnostic robustness check, not as a validation result by itself. Its job is to tell us whether the current prototype routes are structurally stable enough to justify the next stage of comparison and expansion.
