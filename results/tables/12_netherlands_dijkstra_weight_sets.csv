@@ -1,0 +1,5 @@
+behavior,a_wind,b_crosswind,c_distance,d_food
+support_only,1.0,0.0,0.0,0.0
+crosswind_only,0.0,1.0,0.0,0.0
+distance_only,0.0,0.0,1.0,0.0
+food_only,0.0,0.0,0.0,1.0
