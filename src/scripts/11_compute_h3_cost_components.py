@@ -37,10 +37,12 @@ ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.
 OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_components_res3.csv"
 SUMMARY_PATH = PROJECT_ROOT / "results" / "tables" / "11_compute_h3_cost_components_summary.csv"
 EXAMPLE_PATH = PROJECT_ROOT / "results" / "tables" / "11_compute_h3_cost_components_example_rows.csv"
+DIRECTIONAL_DISTANCE_PATH = PROJECT_ROOT / "results" / "tables" / "11_directional_edge_distance_summary.csv"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "11_compute-h3-cost-components.md"
 RAW_HIST_PATH = PROJECT_ROOT / "results" / "figures" / "11_raw_component_histograms.png"
 STD_HIST_PATH = PROJECT_ROOT / "results" / "figures" / "11_standardized_component_histograms.png"
 SCATTER_PATH = PROJECT_ROOT / "results" / "figures" / "11_wind_vs_crosswind_scatter.png"
+DIRECTIONAL_DISTANCE_FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "11_directional_edge_distance_by_bearing.png"
 MAP_WIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_parallel_wind_cost_northward.png"
 MAP_CROSSWIND_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_crosswind_cost_northward.png"
 MAP_DISTANCE_PATH = PROJECT_ROOT / "results" / "figures" / "11_map_distance_cost.png"
@@ -134,6 +136,22 @@ def select_northward_edge_distance(edge_df: pd.DataFrame) -> pd.Series:
     return pd.Series(best_north["edge_distance_km"].to_numpy(), index=best_north["source_h3"].to_numpy())
 
 
+def summarize_directional_distance(edge_df: pd.DataFrame) -> pd.DataFrame:
+    bearing_labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    sector = ((edge_df["edge_bearing_deg"] + 22.5) % 360 // 45).astype(int)
+    out = edge_df[["edge_bearing_deg", "edge_distance_km", "source_lat"]].copy()
+    out["bearing_sector"] = [bearing_labels[i] for i in sector]
+    out["latitude_band"] = (np.floor(out["source_lat"] / 10) * 10).astype(int)
+
+    summary = (
+        out.groupby(["latitude_band", "bearing_sector"])["edge_distance_km"]
+        .agg(["count", "mean", "median", "min", "max"])
+        .reset_index()
+        .sort_values(["latitude_band", "bearing_sector"])
+    )
+    return summary
+
+
 def main() -> None:
     df = pd.read_csv(EDGE_ENV_PATH)
     env = pd.read_csv(ENV_PATH)
@@ -185,6 +203,9 @@ def main() -> None:
     pd.DataFrame(summary_rows).to_csv(SUMMARY_PATH, index=False)
     out.head(40).to_csv(EXAMPLE_PATH, index=False)
 
+    directional_distance = summarize_directional_distance(out)
+    directional_distance.to_csv(DIRECTIONAL_DISTANCE_PATH, index=False)
+
     fig, axes = plt.subplots(2, 2, figsize=(10, 7), constrained_layout=True)
     for ax, col, title in zip(axes.ravel(), ["parallel_wind_cost_raw", "crosswind_cost_raw", "distance_cost_raw", "food_cost_raw"], ["Raw parallel wind cost", "Raw crosswind cost", "Raw distance cost", "Raw food cost"]):
         ax.hist(out[col].dropna(), bins=40, alpha=0.8)
@@ -210,6 +231,16 @@ def main() -> None:
     ax.set_xlabel("w_cost")
     ax.set_ylabel("c_cost")
     fig.savefig(SCATTER_PATH, dpi=150)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(10, 5.5), constrained_layout=True)
+    for label, group in directional_distance.groupby("bearing_sector"):
+        ax.plot(group["latitude_band"], group["mean"], marker="o", linewidth=1.5, label=label)
+    ax.set_title("Mean edge distance by bearing sector and latitude band")
+    ax.set_xlabel("Latitude band (degrees)")
+    ax.set_ylabel("Mean edge distance (km)")
+    ax.legend(title="Bearing sector", ncol=4, fontsize=8)
+    fig.savefig(DIRECTIONAL_DISTANCE_FIGURE_PATH, dpi=160)
     plt.close(fig)
 
     # Component maps at cell level. For visualization, use the wind footprint as the support mask.
@@ -242,7 +273,7 @@ def main() -> None:
         env_map.loc[~env_map["has_wind_support"], col] = np.nan
 
     map_max = float(
-        np.nanmax(
+        np.nanpercentile(
             env_map[
                 [
                     "parallel_wind_cost_northward_std",
@@ -250,7 +281,8 @@ def main() -> None:
                     "distance_cost_std",
                     "food_cost_std",
                 ]
-            ].to_numpy()
+            ].to_numpy(),
+            99,
         )
     )
 
@@ -323,7 +355,7 @@ Audit values:
 - zero or non-positive chlorophyll cells in H3 table: **{zero_chla_count}**
 - positive chlorophyll floor used for the log transform: **{positive_floor:.8f}**
 - cells outside the common wind-supported map footprint: **{missing_support_count}**
-- shared map color scale maximum: **{map_max:.3f} SCU**
+- shared map color scale maximum (P99 cap across displayed map layers): **{map_max:.3f} SCU**
 
 ## Method
 - compute directional edge costs for parallel wind, crosswind, true distance, and food
@@ -332,7 +364,8 @@ Audit values:
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
 - for the distance map, assign to each cell the true distance of the outgoing edge whose bearing is closest to north
 - for visualization only, use the wind-data footprint as a common support mask across all four maps so unsupported cells are not mistaken for valid low or high costs
-- apply one shared color scale across all four maps, starting at 0 and ending at the maximum standardized cost present among the displayed map layers
+- apply one shared color scale across all four maps, starting at 0 and ending at the shared P99 of the displayed standardized map values
+- summarize edge distance by bearing sector and latitude band to check whether visible distance-map patterns reflect real directional anisotropy in the graph
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -352,6 +385,7 @@ Audit values:
   - `results/figures/11_raw_component_histograms.png`
   - `results/figures/11_standardized_component_histograms.png`
   - `results/figures/11_wind_vs_crosswind_scatter.png`
+  - `results/figures/11_directional_edge_distance_by_bearing.png`
   - `results/figures/11_map_parallel_wind_cost_northward.png`
   - `results/figures/11_map_crosswind_cost_northward.png`
   - `results/figures/11_map_distance_cost.png`
@@ -364,6 +398,8 @@ Audit values:
 ![Standardized component histograms](../figures/11_standardized_component_histograms.png)
 
 ![Wind vs crosswind standardized costs](../figures/11_wind_vs_crosswind_scatter.png)
+
+![Directional edge distance by bearing](../figures/11_directional_edge_distance_by_bearing.png)
 
 ![Parallel wind cost map](../figures/11_map_parallel_wind_cost_northward.png)
 
@@ -385,11 +421,14 @@ For the distance map, each cell is assigned the true distance of its outgoing ed
 
 The pole issue in the earlier food map was not something I was happy with. It mixed genuinely poor-food cells with cells that simply lie outside the shared environmental support. Using the wind footprint as a visualization mask is the right fix for the maps, because it prevents unsupported cells from being visually interpreted as real food-cost values.
 
+The directional distance diagnostic helps interpret the odd blue corridor patterns in the northward distance map. Those patterns are partly a consequence of selecting a single outgoing edge per cell for display, but the bearing-by-latitude summary lets us check whether there is also real directional variation in edge distances in the H3 graph.
+
 ## Points to watch
 - the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
 - the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
 - the common wind-footprint mask is a visualization choice for consistency and honesty across maps, not yet a modeling exclusion rule
-- the shared color scale makes map-to-map magnitude comparisons easier, but it also compresses contrast in components whose ranges are naturally narrower; that tradeoff is worth it here because you explicitly want comparability
+- the shared P99-capped color scale makes map-to-map magnitude comparisons easier while preserving more contrast than a raw-maximum scale
+- if the directional distance summary shows strong systematic bearing effects, we should keep that in mind when interpreting later Dijkstra behavior
 - the legacy constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 

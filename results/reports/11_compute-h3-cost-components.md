@@ -26,7 +26,7 @@ Audit values:
 - zero or non-positive chlorophyll cells in H3 table: **1869**
 - positive chlorophyll floor used for the log transform: **0.02446900**
 - cells outside the common wind-supported map footprint: **11633**
-- shared map color scale maximum: **149.219 SCU**
+- shared map color scale maximum (P99 cap across displayed map layers): **100.000 SCU**
 
 ## Method
 - compute directional edge costs for parallel wind, crosswind, true distance, and food
@@ -35,7 +35,8 @@ Audit values:
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
 - for the distance map, assign to each cell the true distance of the outgoing edge whose bearing is closest to north
 - for visualization only, use the wind-data footprint as a common support mask across all four maps so unsupported cells are not mistaken for valid low or high costs
-- apply one shared color scale across all four maps, starting at 0 and ending at the maximum standardized cost present among the displayed map layers
+- apply one shared color scale across all four maps, starting at 0 and ending at the shared P99 of the displayed standardized map values
+- summarize edge distance by bearing sector and latitude band to check whether visible distance-map patterns reflect real directional anisotropy in the graph
 
 ## Key formulas used
 - movement direction comes from the edge bearing for the edge-level table
@@ -55,6 +56,7 @@ Audit values:
   - `results/figures/11_raw_component_histograms.png`
   - `results/figures/11_standardized_component_histograms.png`
   - `results/figures/11_wind_vs_crosswind_scatter.png`
+  - `results/figures/11_directional_edge_distance_by_bearing.png`
   - `results/figures/11_map_parallel_wind_cost_northward.png`
   - `results/figures/11_map_crosswind_cost_northward.png`
   - `results/figures/11_map_distance_cost.png`
@@ -67,6 +69,8 @@ Audit values:
 ![Standardized component histograms](../figures/11_standardized_component_histograms.png)
 
 ![Wind vs crosswind standardized costs](../figures/11_wind_vs_crosswind_scatter.png)
+
+![Directional edge distance by bearing](../figures/11_directional_edge_distance_by_bearing.png)
 
 ![Parallel wind cost map](../figures/11_map_parallel_wind_cost_northward.png)
 
@@ -88,11 +92,14 @@ For the distance map, each cell is assigned the true distance of its outgoing ed
 
 The pole issue in the earlier food map was not something I was happy with. It mixed genuinely poor-food cells with cells that simply lie outside the shared environmental support. Using the wind footprint as a visualization mask is the right fix for the maps, because it prevents unsupported cells from being visually interpreted as real food-cost values.
 
+The directional distance diagnostic helps interpret the odd blue corridor patterns in the northward distance map. Those patterns are partly a consequence of selecting a single outgoing edge per cell for display, but the bearing-by-latitude summary lets us check whether there is also real directional variation in edge distances in the H3 graph.
+
 ## Points to watch
 - the distance component in the routing model still represents true H3 edge length, which is an intentional refinement relative to the legacy constant-per-step distance term
 - the mapped northward distance surface is a separate diagnostic layer for interpretability, based on a real outgoing northward edge per cell
 - the common wind-footprint mask is a visualization choice for consistency and honesty across maps, not yet a modeling exclusion rule
-- the shared color scale makes map-to-map magnitude comparisons easier, but it also compresses contrast in components whose ranges are naturally narrower; that tradeoff is worth it here because you explicitly want comparability
+- the shared P99-capped color scale makes map-to-map magnitude comparisons easier while preserving more contrast than a raw-maximum scale
+- if the directional distance summary shows strong systematic bearing effects, we should keep that in mind when interpreting later Dijkstra behavior
 - the legacy constant distance reference extracted from the standardized wind term is **49.999**, which provides a direct bridge back to the earlier formulation
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 
