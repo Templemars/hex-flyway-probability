@@ -137,10 +137,10 @@ Working decision:
 
 Distance-term refinement:
 - the 2025 paper used a constant per-step distance penalty derived from `P50(w_cost)`
-- the H3 sequel should instead use an H3-based distance refinement rather than a constant step penalty
-- the current implementation uses **extra H3 edge distance relative to the median H3 neighbor-step distance**, floored at zero
-- this should be described explicitly as an intentional methodological refinement enabled by the graph-based H3 representation
-- the earlier raw-edge-length P99 scaling was too harsh because most H3 neighbor edges are similar in length and therefore clustered near the upper standardized range
+- after testing H3-specific varying-distance formulations, the current sequel prototype returns to that paper-consistent routing logic
+- the routing distance cost should therefore remain a **constant per-step penalty equal to `P50(w_cost)`**
+- true H3 edge distance should still be retained separately for later route-length, airspeed, and other biological summaries
+- this separation should be described explicitly so the routing cost term is not confused with later geometric diagnostics
 
 **RED FLAG, revisit later:**
 - although the edge-distance summary suggests only modest directional variation overall, the H3 graph is not perfectly distance-isotropic by bearing and latitude

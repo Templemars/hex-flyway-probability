@@ -5,15 +5,16 @@ Compute raw and standardized H3 movement-cost components on directed edges.
 Purpose
 -------
 This script constructs the first full component table for the H3 sequel.
-It follows the published 2025 logic where possible, while incorporating the
-agreed refinement that distance is based on true H3 edge length.
+It follows the published 2025 logic where possible, while keeping true edge
+length available for later route summaries and biological diagnostics.
 
 Current scope
 -------------
 1. Read the enriched directed H3 edge table
 2. Compute raw edge-level movement components
 3. Standardize components using a P99-based scaling philosophy
-4. Write a transparent component table
+4. Preserve paper-consistent constant distance cost for routing
+5. Write a transparent component table
 
 Component ordering for the sequel:
 - a = wind
@@ -164,21 +165,20 @@ def main() -> None:
     p99_windsupport = percentile_99(windsupport)
     parallel_wind_cost_raw = np.abs(windsupport - p99_windsupport)
     crosswind_raw = np.abs(df["source_u10"] * move_north - df["source_v10"] * move_east)
-    typical_edge_distance_km = percentile_50(df["edge_distance_km"])
-    distance_cost_raw = (df["edge_distance_km"] - typical_edge_distance_km).clip(lower=0.0)
     food_cost_raw = compute_food_cost(df["source_chlor_a"])
 
     out = df.copy()
     out["windsupport_raw"] = windsupport
     out["parallel_wind_cost_raw"] = parallel_wind_cost_raw
     out["crosswind_cost_raw"] = crosswind_raw
-    out["distance_cost_raw"] = distance_cost_raw
+    out["distance_cost_raw"] = np.nan
     out["food_cost_raw"] = food_cost_raw
     out["w_cost"] = standardize_to_100(out["parallel_wind_cost_raw"])
     out["c_cost"] = standardize_to_100(out["crosswind_cost_raw"])
-    out["d_cost"] = standardize_to_100(out["distance_cost_raw"])
     out["f_cost"] = standardize_to_100(out["food_cost_raw"])
     out["legacy_constant_distance_reference"] = percentile_50(out["w_cost"])
+    out["distance_cost_raw"] = out["legacy_constant_distance_reference"]
+    out["d_cost"] = out["legacy_constant_distance_reference"]
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -262,8 +262,8 @@ def main() -> None:
     env_map["food_cost_raw"] = compute_food_cost(env_map["chlor_a"])
     env_map["parallel_wind_cost_northward_std"] = standardize_to_100(env_map["parallel_wind_cost_northward_raw"])
     env_map["crosswind_cost_northward_std"] = standardize_to_100(env_map["crosswind_cost_northward_raw"])
-    env_map["distance_cost_raw"] = (env_map["northward_edge_distance_km"] - typical_edge_distance_km).clip(lower=0.0)
-    env_map["distance_cost_std"] = standardize_to_100(env_map["distance_cost_raw"].fillna(0.0))
+    env_map["distance_cost_raw"] = out["legacy_constant_distance_reference"].iloc[0]
+    env_map["distance_cost_std"] = out["legacy_constant_distance_reference"].iloc[0]
     env_map["food_cost_std"] = standardize_to_100(env_map["food_cost_raw"])
 
     for col in [
@@ -360,7 +360,7 @@ Audit values:
 - shared map color scale maximum (P99 cap across displayed map layers): **{map_max:.3f} SCU**
 
 ## Method
-- compute directional edge costs for parallel wind, crosswind, extra edge distance relative to a typical neighbor step, and food
+- compute directional edge costs for parallel wind, crosswind, paper-consistent constant step distance, and food
 - standardize each component with the agreed P99-based scaling philosophy
 - additionally produce four cell-level component maps for transparency
 - for the two wind component maps, assume a bird flying in a straight northward direction everywhere
@@ -374,8 +374,8 @@ Audit values:
 - wind support is the projection of the source wind vector onto the movement direction
 - raw parallel wind cost = distance from `P99(windsupport)`
 - raw crosswind cost = magnitude of the wind component perpendicular to movement
-- raw distance cost = extra H3 edge distance beyond the median H3 neighbor-step distance, floored at zero
-- diagnostic distance map = extra distance of the outgoing edge whose bearing is closest to north, relative to the same median step length
+- raw distance cost = constant per-step penalty equal to `P50(w_cost)`, matching the paper logic
+- diagnostic distance map = the same constant distance cost shown over the supported domain for comparison with the other components
 - raw food cost = `|log(chla) + 1|` after capping high-productivity cells and flooring non-positive chlorophyll values for numerical stability
 - standardized component cost = `100 * raw_component / P99(raw_component)`
 
@@ -414,7 +414,7 @@ Audit values:
 ## Interpretation
 This step now does what it should scientifically: it creates an explicit directional cost graph while keeping the food surface behavior consistent with the published logic that poor-food cells must be expensive.
 
-The main methodological refinement in this version is the distance term. The first H3 implementation used raw edge length scaled directly to the P99, which made most H3 edges cluster close to the upper standardized range because neighbor distances at one H3 resolution are fairly similar. The revised formulation is more defensible: it treats a typical median H3 neighbor step as the zero-baseline distance cost and penalizes only the extra distance beyond that baseline.
+The main methodological clarification in this version is the distance term. After testing H3-specific varying-distance formulations, the routing cost has been returned to the paper-consistent logic: a constant per-step penalty equal to `P50(w_cost)`. That keeps route-length pressure inside the cost function without forcing the routing model to treat small H3 geometric differences as if they were a primary movement driver.
 
 The four maps are also useful because they separate two different views of the model:
 - edge-level directional costs used in the real path calculations
@@ -428,13 +428,13 @@ The pole issue in the earlier food map was not something I was happy with. It mi
 The directional distance diagnostic helps interpret the odd blue corridor patterns in the northward distance map. Those patterns are partly a consequence of selecting a single outgoing edge per cell for display, but the bearing-by-latitude summary lets us check whether there is also real directional variation in edge distances in the H3 graph.
 
 ## Points to watch
-- the distance component in the routing model now represents extra H3 edge length relative to a typical median neighbor step, which is an intentional refinement relative to the legacy constant-per-step distance term
-- the mapped northward distance surface is a separate diagnostic layer for interpretability, based on the extra length of a real outgoing northward edge per cell relative to the same baseline
+- the distance component in the routing model is now again the paper-consistent constant per-step penalty derived from `P50(w_cost)`
+- true H3 edge distances are still retained in the edge table and route summaries for later route-length, airspeed, and biological interpretation work
 - the common wind-footprint mask is a visualization choice for consistency and honesty across maps, not yet a modeling exclusion rule
 - the shared P99-capped color scale makes map-to-map magnitude comparisons easier while preserving more contrast than a raw-maximum scale
 - if the directional distance summary shows strong systematic bearing effects, we should keep that in mind when interpreting later Dijkstra behavior
-- the median H3 neighbor-step baseline used for the revised distance term is **{typical_edge_distance_km:.3f} km**
-- the legacy constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which provides a direct bridge back to the earlier formulation
+- the constant distance reference extracted from the standardized wind term is **{legacy_ref:.3f}**, which now serves directly as the routing distance cost
+- true H3 edge distances remain available separately in `edge_distance_km` for later geometric and biological summaries
 - the visual wind maps are diagnostic surfaces, not replacements for the directional edge-level calculations
 
 ## Next step
