@@ -28,14 +28,11 @@ See:
 - weight table: `results/tables/15_svalbard_full_bounded_dijkstra_weight_sets.csv`
 - endpoint table: `results/tables/15_svalbard_full_bounded_dijkstra_endpoints.csv`
 - route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes.png`
-- transparent route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png`
 - route-point density heatmap: `results/figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png`
 
 ## Quick-look figures
 
 ![Full bounded H3 Dijkstra sweep](../figures/15_svalbard_full_bounded_dijkstra_routes.png)
-
-![Full bounded H3 Dijkstra sweep, transparent overview](../figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png)
 
 ![Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap](../figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png)
 

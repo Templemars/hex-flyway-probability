@@ -48,7 +48,7 @@ def main() -> None:
     for _, route in path_df.groupby("behavior"):
         lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
         lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
-        ax.plot(lons, lats, color="#355f8d", linewidth=1.6, alpha=0.10)
+        ax.plot(lons, lats, color="#355f8d", linewidth=2.8, alpha=0.10)
     ax.scatter([start_record["lon"], end_record["lon"]], [start_record["lat"], end_record["lat"]], color="black", s=35, marker="x")
     ax.set_title("Full bounded H3 Dijkstra sweep, Svalbard spring")
     ax.set_xlabel("Longitude (degrees)")
@@ -56,22 +56,6 @@ def main() -> None:
     ax.set_xlim(-95, 35)
     ax.set_ylim(-80, 85)
     fig.savefig(FIGURE_PATH, dpi=170)
-    plt.close(fig)
-
-    fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
-    ax.scatter(masked["lon"], masked["lat"], s=90, marker="h", color="#c8b08f", alpha=0.75, linewidths=0)
-    ax.scatter(supported["lon"], supported["lat"], s=65, marker="h", color="#dceaf7", alpha=0.12, linewidths=0)
-    for _, route in path_df.groupby("behavior"):
-        lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
-        lats = [route.iloc[0]["source_lat"]] + route["target_lat"].tolist()
-        ax.plot(lons, lats, color="black", linewidth=2.2, alpha=0.025)
-    ax.scatter([start_record["lon"], end_record["lon"]], [start_record["lat"], end_record["lat"]], color="crimson", s=35, marker="x")
-    ax.set_title("Full bounded H3 Dijkstra sweep, transparent overview")
-    ax.set_xlabel("Longitude (degrees)")
-    ax.set_ylabel("Latitude (degrees)")
-    ax.set_xlim(-95, 35)
-    ax.set_ylim(-80, 85)
-    fig.savefig(FIGURE_DENSITY_PATH, dpi=170)
     plt.close(fig)
 
     point_df = path_df[["source_lon", "source_lat"]].rename(columns={"source_lon": "lon", "source_lat": "lat"}).copy()
@@ -125,14 +109,11 @@ See:
 - weight table: `results/tables/15_svalbard_full_bounded_dijkstra_weight_sets.csv`
 - endpoint table: `results/tables/15_svalbard_full_bounded_dijkstra_endpoints.csv`
 - route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes.png`
-- transparent route overview figure: `results/figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png`
 - route-point density heatmap: `results/figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png`
 
 ## Quick-look figures
 
 ![Full bounded H3 Dijkstra sweep](../figures/15_svalbard_full_bounded_dijkstra_routes.png)
-
-![Full bounded H3 Dijkstra sweep, transparent overview](../figures/15_svalbard_full_bounded_dijkstra_routes_transparent.png)
 
 ![Full bounded H3 Dijkstra sweep, Atlantic point-density heatmap](../figures/15_svalbard_full_bounded_dijkstra_point_density_heatmap.png)
 
