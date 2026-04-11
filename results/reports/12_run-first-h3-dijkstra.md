@@ -70,6 +70,7 @@ Map framing:
 ## Why the overlay figure is useful, and its limit
 The overlay figure is scientifically useful as a **diagnostic comparison**.
 It helps us check whether each single-factor route is moving through visually low-cost regions of the corresponding component background.
+The four panels reuse the older mapping rule of a shared color scale from `0` to the shared `P99` across the displayed component backgrounds, and each panel has its own explicit colorbar for readability.
 
 However, it should not be interpreted too literally as the exact optimization surface used by Dijkstra, because:
 - the real routing is done on the directed edge graph

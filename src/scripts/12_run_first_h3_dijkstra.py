@@ -246,11 +246,23 @@ def main() -> None:
         "food_only": ("f_cost", "Food cost background with food-only LCP"),
     }
     cell_background = df.groupby("source_h3", as_index=False)[["source_lon", "source_lat", "w_cost", "c_cost", "d_cost", "f_cost"]].first()
+    shared_overlay_max = float(np.nanpercentile(cell_background[["w_cost", "c_cost", "d_cost", "f_cost"]].to_numpy(), 99))
     fig, axes = plt.subplots(2, 2, figsize=(11, 13), constrained_layout=True)
     for ax, behavior in zip(axes.ravel(), ["support_only", "crosswind_only", "distance_only", "food_only"]):
         value_col, title = background_cols[behavior]
         ax.scatter(masked["lon"], masked["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
-        ax.scatter(cell_background["source_lon"], cell_background["source_lat"], c=cell_background[value_col], s=55, marker="h", cmap="viridis", linewidths=0, alpha=0.9)
+        sc = ax.scatter(
+            cell_background["source_lon"],
+            cell_background["source_lat"],
+            c=cell_background[value_col],
+            s=55,
+            marker="h",
+            cmap="viridis",
+            linewidths=0,
+            alpha=0.9,
+            vmin=0.0,
+            vmax=shared_overlay_max,
+        )
         route = path_df[path_df["behavior"] == behavior]
         if not route.empty:
             lons = [route.iloc[0]["source_lon"]] + route["target_lon"].tolist()
@@ -261,6 +273,8 @@ def main() -> None:
         ax.set_ylabel("Latitude (degrees)")
         ax.set_xlim(-95, 35)
         ax.set_ylim(-80, 85)
+        cbar = fig.colorbar(sc, ax=ax)
+        cbar.set_label(f"Standardized cost (SCU), shared scale 0 to {shared_overlay_max:.1f}")
     fig.savefig(OVERLAY_FIGURE_PATH, dpi=170)
     plt.close(fig)
 
@@ -337,6 +351,7 @@ Map framing:
 ## Why the overlay figure is useful, and its limit
 The overlay figure is scientifically useful as a **diagnostic comparison**.
 It helps us check whether each single-factor route is moving through visually low-cost regions of the corresponding component background.
+The four panels reuse the older mapping rule of a shared color scale from `0` to the shared `P99` across the displayed component backgrounds, and each panel has its own explicit colorbar for readability.
 
 However, it should not be interpreted too literally as the exact optimization surface used by Dijkstra, because:
 - the real routing is done on the directed edge graph
