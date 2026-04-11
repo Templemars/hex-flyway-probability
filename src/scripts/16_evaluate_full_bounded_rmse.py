@@ -25,7 +25,7 @@ OUTPUT_RMSE_PATH = PROJECT_ROOT / "results" / "tables" / "16_svalbard_full_bound
 OUTPUT_BAND_PATH = PROJECT_ROOT / "results" / "tables" / "16_svalbard_full_bounded_route_band_summaries.csv"
 FIGURE_TOP_PATH = PROJECT_ROOT / "results" / "figures" / "16_svalbard_top20_rmse_routes.png"
 FIGURE_COEFF_PATH = PROJECT_ROOT / "results" / "figures" / "16_svalbard_top_rmse_coefficient_boxplots.png"
-REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "16_evaluate-full-bounded-rmse.md"
+REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "16_evaluate-full-bounded-rmse-svalbard-spring.md"
 
 
 def assign_lat_band(lat: pd.Series) -> pd.Series:

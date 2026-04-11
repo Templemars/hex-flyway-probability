@@ -31,7 +31,7 @@ OUTPUT_WEIGHTS_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstr
 OUTPUT_ENDPOINTS_PATH = PROJECT_ROOT / "results" / "tables" / "12_svalbard_dijkstra_endpoints.csv"
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "12_svalbard_dijkstra_routes.png"
 OVERLAY_FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "12_component_maps_with_lcps.png"
-REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "12_run-first-h3-dijkstra.md"
+REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "12_run-first-h3-dijkstra-svalbard-spring.md"
 
 
 WEIGHT_SETS = [

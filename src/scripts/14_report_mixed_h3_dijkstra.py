@@ -21,7 +21,7 @@ FAILURES_PATH = PROJECT_ROOT / "results" / "tables" / "14_svalbard_mixed_dijkstr
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "14_svalbard_mixed_dijkstra_routes.png"
 OVERLAY_FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "14_mixed_component_maps_with_lcps.png"
-REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "14_run-mixed-h3-dijkstra.md"
+REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "14_run-mixed-h3-dijkstra-svalbard-spring.md"
 
 
 def draw_component_map_panel(ax, df, value_col, masked_df, title, vmin, vmax):

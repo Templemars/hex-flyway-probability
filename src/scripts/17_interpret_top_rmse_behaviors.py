@@ -26,7 +26,7 @@ OUTPUT_BAND_ERROR_PATH = PROJECT_ROOT / "results" / "tables" / "17_svalbard_top2
 FIGURE_COEFF_SCATTER = PROJECT_ROOT / "results" / "figures" / "17_svalbard_top20_coefficient_scatter.png"
 FIGURE_BAND_ERROR = PROJECT_ROOT / "results" / "figures" / "17_svalbard_top20_band_errors.png"
 FIGURE_ROUTE_AGREEMENT = PROJECT_ROOT / "results" / "figures" / "17_svalbard_top20_route_agreement.png"
-REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "17_interpret-top-rmse-behaviors.md"
+REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "17_interpret-top-rmse-behaviors-svalbard-spring.md"
 
 
 def route_points_from_group(route: pd.DataFrame) -> pd.DataFrame:

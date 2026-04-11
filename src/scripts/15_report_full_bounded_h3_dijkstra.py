@@ -23,7 +23,7 @@ ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_routes.png"
 FIGURE_DENSITY_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_routes_transparent.png"
 FIGURE_HEATMAP_PATH = PROJECT_ROOT / "results" / "figures" / "15_svalbard_full_bounded_dijkstra_point_density_heatmap.png"
-REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "15_run-full-bounded-h3-dijkstra.md"
+REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "15_run-full-bounded-h3-dijkstra-svalbard-spring.md"
 
 
 def main() -> None:
