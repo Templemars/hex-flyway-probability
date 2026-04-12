@@ -94,13 +94,30 @@ def main() -> None:
     metric_rows = []
     plotted_routes = {behavior: [] for behavior, *_ in WEIGHT_SETS}
 
-    for behavior, a, b, c, d in WEIGHT_SETS:
+    n_behaviors = len(WEIGHT_SETS)
+    n_pairs = len(start_candidates) * len(end_candidates)
+    print(
+        f"Running endpoint sensitivity for {n_behaviors} behaviors across {n_pairs} start/end combinations each",
+        flush=True,
+    )
+    for behavior_idx, (behavior, a, b, c, d) in enumerate(WEIGHT_SETS, start=1):
+        print(
+            f"[{behavior_idx}/{n_behaviors}] behavior={behavior} weights=({a:.1f}, {b:.1f}, {c:.1f}, {d:.1f})",
+            flush=True,
+        )
         run_df = df.copy()
         run_df["total_cost"] = a * run_df["w_cost"] + b * run_df["c_cost"] + c * run_df["d_cost"] + d * run_df["f_cost"]
         graph = build_graph(run_df)
 
+        pair_idx = 0
         for start_cell in start_candidates:
             for end_cell in end_candidates:
+                pair_idx += 1
+                if pair_idx == 1 or pair_idx % 20 == 0 or pair_idx == n_pairs:
+                    print(
+                        f"  [{behavior}] endpoint pair {pair_idx}/{n_pairs}",
+                        flush=True,
+                    )
                 route_name = f"start_{start_cell}_end_{end_cell}"
                 is_reference = start_cell == REFERENCE_START and end_cell == REFERENCE_END
                 if start_cell not in graph or end_cell not in graph:
@@ -141,6 +158,7 @@ def main() -> None:
     endpoint_df = pd.DataFrame(endpoint_rows)
     coords_df = pd.DataFrame(coord_rows)
 
+    print("Computing route similarity metrics", flush=True)
     for behavior, routes in plotted_routes.items():
         reference_matches = [item for item in routes if item[3]]
         if not reference_matches:
@@ -187,6 +205,7 @@ def main() -> None:
         "food_only": ("f_cost", "Food cost background with endpoint sensitivity"),
     }
 
+    print("Building endpoint sensitivity figure and report", flush=True)
     fig, axes = plt.subplots(2, 2, figsize=(11, 13), constrained_layout=True)
     for ax, behavior in zip(axes.ravel(), ["support_only", "crosswind_only", "distance_only", "food_only"]):
         value_col, title = background_cols[behavior]

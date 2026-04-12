@@ -67,7 +67,13 @@ def main() -> None:
 
     failed_behaviors: list[dict] = []
 
-    for behavior, a, b, c, d in WEIGHT_SETS:
+    n_behaviors = len(WEIGHT_SETS)
+    print(f"Running first H3 Dijkstra prototype for {n_behaviors} behaviors", flush=True)
+    for idx, (behavior, a, b, c, d) in enumerate(WEIGHT_SETS, start=1):
+        print(
+            f"[{idx}/{n_behaviors}] behavior={behavior} weights=({a:.1f}, {b:.1f}, {c:.1f}, {d:.1f})",
+            flush=True,
+        )
         cost_col = f"total_cost_{behavior}"
         df[cost_col] = a * df["w_cost"] + b * df["c_cost"] + c * df["d_cost"] + d * df["f_cost"]
         graph = build_graph(df, cost_col)
@@ -110,6 +116,7 @@ def main() -> None:
     if not failed_df.empty:
         failed_df.to_csv(OUTPUT_SUMMARY_PATH.with_name('12_svalbard_dijkstra_failures.csv'), index=False)
 
+    print("Building route figures and report", flush=True)
     fig, ax = plt.subplots(figsize=(8.2, 10.5), constrained_layout=True)
     masked_background = env.copy()
     masked = masked_background.loc[~masked_background["has_wind_support"]].copy()
