@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from flyway_h3.workflow_utils import draw_component_map_panel
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PATHS_PATH = PROJECT_ROOT / "results" / "tables" / "14_svalbard_mixed_dijkstra_paths.csv"
 SUMMARY_PATH = PROJECT_ROOT / "results" / "tables" / "14_svalbard_mixed_dijkstra_summary.csv"
@@ -22,17 +24,6 @@ ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.
 FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "14_svalbard_mixed_dijkstra_routes.png"
 OVERLAY_FIGURE_PATH = PROJECT_ROOT / "results" / "figures" / "14_mixed_component_maps_with_lcps.png"
 REPORT_PATH = PROJECT_ROOT / "results" / "reports" / "14_run-mixed-h3-dijkstra-svalbard-spring.md"
-
-
-def draw_component_map_panel(ax, df, value_col, masked_df, title, vmin, vmax):
-    ax.scatter(masked_df["lon"], masked_df["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
-    sc = ax.scatter(df["lon"], df["lat"], c=df[value_col], s=65, marker="h", cmap="viridis", linewidths=0, alpha=0.9, vmin=vmin, vmax=vmax)
-    ax.set_title(title)
-    ax.set_xlabel("Longitude (degrees)")
-    ax.set_ylabel("Latitude (degrees)")
-    ax.set_xlim(-95, 35)
-    ax.set_ylim(-80, 85)
-    return sc
 
 
 def main() -> None:

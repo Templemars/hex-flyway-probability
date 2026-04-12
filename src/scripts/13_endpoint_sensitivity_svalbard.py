@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+
+from flyway_h3.workflow_utils import build_graph, derive_prototype_endpoints, draw_component_map_panel, summarize_path
 import h3
 
 
@@ -36,21 +38,6 @@ WEIGHT_SETS = [
 ]
 
 
-def build_graph(df: pd.DataFrame) -> nx.DiGraph:
-    graph = nx.DiGraph()
-    for row in df.itertuples(index=False):
-        graph.add_edge(
-            row.source_h3,
-            row.target_h3,
-            weight=float(row.total_cost),
-            source_lon=float(row.source_lon),
-            source_lat=float(row.source_lat),
-            target_lon=float(row.target_lon),
-            target_lat=float(row.target_lat),
-        )
-    return graph
-
-
 def route_to_rows(behavior: str, route_name: str, path: list[str], graph: nx.DiGraph) -> list[dict]:
     rows = []
     if len(path) < 2:
@@ -61,28 +48,6 @@ def route_to_rows(behavior: str, route_name: str, path: list[str], graph: nx.DiG
         edge = graph[u][v]
         rows.append({"behavior": behavior, "route_name": route_name, "point_index": i, "lon": edge["target_lon"], "lat": edge["target_lat"]})
     return rows
-
-
-def draw_component_map_panel(ax, df, value_col, masked_df, title, vmin, vmax):
-    ax.scatter(masked_df["lon"], masked_df["lat"], s=75, marker="h", color="#c8b08f", alpha=0.55, linewidths=0)
-    sc = ax.scatter(
-        df["lon"],
-        df["lat"],
-        c=df[value_col],
-        s=65,
-        marker="h",
-        cmap="viridis",
-        linewidths=0,
-        alpha=0.9,
-        vmin=vmin,
-        vmax=vmax,
-    )
-    ax.set_title(title)
-    ax.set_xlabel("Longitude (degrees)")
-    ax.set_ylabel("Latitude (degrees)")
-    ax.set_xlim(-95, 35)
-    ax.set_ylim(-80, 85)
-    return sc
 
 
 def pairwise_point_distances_km(a: np.ndarray, b: np.ndarray) -> np.ndarray:
