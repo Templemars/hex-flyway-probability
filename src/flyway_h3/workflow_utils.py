@@ -18,27 +18,50 @@ def derive_prototype_endpoints(
     env: pd.DataFrame,
     start_rule: str,
     end_rule: str,
+    start_override_cell: str | None = None,
+    end_override_cell: str | None = None,
+    start_override_reason: str | None = None,
+    end_override_reason: str | None = None,
 ) -> tuple[dict, dict]:
-    start_point = benchmark.iloc[0]
-    end_point = benchmark.iloc[-1]
+    if start_rule.startswith("first_row_of_"):
+        start_point = benchmark.iloc[0]
+    elif start_rule.startswith("last_row_of_"):
+        start_point = benchmark.iloc[-1]
+    else:
+        raise ValueError(f"Unsupported start_rule: {start_rule}")
+
+    if end_rule.startswith("first_row_of_"):
+        end_point = benchmark.iloc[0]
+    elif end_rule.startswith("last_row_of_"):
+        end_point = benchmark.iloc[-1]
+    else:
+        raise ValueError(f"Unsupported end_rule: {end_rule}")
+
     start_lon = float(start_point["lon_median10"])
     start_lat = float(start_point["lat_median10"])
     end_lon = float(end_point["lon_median10"])
     end_lat = float(end_point["lat_median10"])
+    start_cell = start_override_cell or nearest_h3_cell(env, start_lon, start_lat)
+    end_cell = end_override_cell or nearest_h3_cell(env, end_lon, end_lat)
+
     return (
         {
             "endpoint_role": "start",
             "benchmark_rule": start_rule,
             "lon": start_lon,
             "lat": start_lat,
-            "nearest_h3_cell": nearest_h3_cell(env, start_lon, start_lat),
+            "nearest_h3_cell": start_cell,
+            "endpoint_substituted": bool(start_override_cell),
+            "substitution_reason": start_override_reason or "",
         },
         {
             "endpoint_role": "end",
             "benchmark_rule": end_rule,
             "lon": end_lon,
             "lat": end_lat,
-            "nearest_h3_cell": nearest_h3_cell(env, end_lon, end_lat),
+            "nearest_h3_cell": end_cell,
+            "endpoint_substituted": bool(end_override_cell),
+            "substitution_reason": end_override_reason or "",
         },
     )
 
@@ -61,6 +84,31 @@ def build_graph(df: pd.DataFrame, cost_col: str) -> nx.DiGraph:
             target_lat=float(row.target_lat),
         )
     return graph
+
+
+def build_base_graph(df: pd.DataFrame) -> nx.DiGraph:
+    graph = nx.DiGraph()
+    for row in df.itertuples(index=False):
+        graph.add_edge(
+            row.source_h3,
+            row.target_h3,
+            weight=np.nan,
+            edge_distance_km=float(getattr(row, "edge_distance_km", np.nan)),
+            w_cost=float(getattr(row, "w_cost", np.nan)),
+            c_cost=float(getattr(row, "c_cost", np.nan)),
+            d_cost=float(getattr(row, "d_cost", np.nan)),
+            f_cost=float(getattr(row, "f_cost", np.nan)),
+            source_lon=float(row.source_lon),
+            source_lat=float(row.source_lat),
+            target_lon=float(row.target_lon),
+            target_lat=float(row.target_lat),
+        )
+    return graph
+
+
+def set_graph_weights(graph: nx.DiGraph, df: pd.DataFrame, weight_values: np.ndarray) -> None:
+    for row, weight in zip(df.itertuples(index=False), weight_values, strict=False):
+        graph[row.source_h3][row.target_h3]["weight"] = float(weight)
 
 
 def summarize_path(graph: nx.DiGraph, path: list[str], label: str) -> tuple[list[dict], dict]:

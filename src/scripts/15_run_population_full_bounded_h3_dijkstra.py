@@ -12,18 +12,21 @@ import sys
 from itertools import product
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
 import networkx as nx
 import pandas as pd
 
 from flyway_h3.cases import build_case_map
 from flyway_h3.workflow_utils import (
-    build_graph,
+    build_base_graph,
     derive_prototype_endpoints,
+    set_graph_weights,
     summarize_path,
 )
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPONENT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_components_res3.csv"
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
 RESULTS_TABLE_DIR = PROJECT_ROOT / "results" / "tables"
@@ -65,8 +68,22 @@ def main() -> None:
     env["has_wind_support"] = ~(env[["u10", "v10"]].isna().all(axis=1))
     water_cells = set(env.loc[env["has_wind_support"], "h3_cell"].astype(str))
     df = df[df["source_h3"].astype(str).isin(water_cells) & df["target_h3"].astype(str).isin(water_cells)].copy()
+    base_graph = build_base_graph(df)
+    w_cost = df["w_cost"].to_numpy(dtype=float)
+    c_cost = df["c_cost"].to_numpy(dtype=float)
+    d_cost = df["d_cost"].to_numpy(dtype=float)
+    f_cost = df["f_cost"].to_numpy(dtype=float)
 
-    start_record, end_record = derive_prototype_endpoints(benchmark, env, cfg["start_rule"], cfg["end_rule"])
+    start_record, end_record = derive_prototype_endpoints(
+        benchmark,
+        env,
+        cfg["start_rule"],
+        cfg["end_rule"],
+        start_override_cell=cfg.get("start_override_cell"),
+        end_override_cell=cfg.get("end_override_cell"),
+        start_override_reason=cfg.get("start_override_reason"),
+        end_override_reason=cfg.get("end_override_reason"),
+    )
     start_cell = start_record["nearest_h3_cell"]
     end_cell = end_record["nearest_h3_cell"]
 
@@ -79,17 +96,15 @@ def main() -> None:
 
     n_total = len(weight_sets)
     for idx, (behavior, a, b, c, d) in enumerate(weight_sets, start=1):
-        if idx == 1 or idx % 10 == 0 or idx == n_total:
-            print(
-                f"[{case_key}] behavior {idx}/{n_total}: {behavior} "
-                f"weights=({a:.1f}, {b:.1f}, {c:.1f}, {d:.1f})",
-                flush=True,
-            )
-        run_df = df.copy()
-        run_df["total_cost"] = a * run_df["w_cost"] + b * run_df["c_cost"] + c * run_df["d_cost"] + d * run_df["f_cost"]
-        graph = build_graph(run_df, "total_cost")
+        print(
+            f"[{case_key}] behavior {idx}/{n_total}: {behavior} "
+            f"weights=({a:.1f}, {b:.1f}, {c:.1f}, {d:.1f})",
+            flush=True,
+        )
+        total_cost = a * w_cost + b * c_cost + c * d_cost + d * f_cost
+        set_graph_weights(base_graph, df, total_cost)
         try:
-            path = nx.shortest_path(graph, source=start_cell, target=end_cell, weight="weight")
+            path = nx.shortest_path(base_graph, source=start_cell, target=end_cell, weight="weight")
         except Exception as exc:
             failed_behaviors.append(
                 {
@@ -105,7 +120,7 @@ def main() -> None:
             )
             print(f"[{case_key}] failed: {behavior} ({type(exc).__name__}: {exc})", flush=True)
             continue
-        path_rows, summary = summarize_path(graph, path, behavior)
+        path_rows, summary = summarize_path(base_graph, path, behavior)
         summary.update({"a_wind": a, "b_crosswind": b, "c_distance": c, "d_food": d, "status": "ok"})
         all_path_rows.extend(path_rows)
         summaries.append(summary)

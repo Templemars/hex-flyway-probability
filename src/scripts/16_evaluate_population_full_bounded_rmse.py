@@ -9,6 +9,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -17,7 +20,6 @@ from flyway_h3.cases import build_case_map
 from flyway_h3.workflow_utils import assign_lat_band, route_points_from_group
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
 RESULTS_TABLE_DIR = PROJECT_ROOT / "results" / "tables"
 RESULTS_FIGURE_DIR = PROJECT_ROOT / "results" / "figures"

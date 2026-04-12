@@ -37,8 +37,10 @@ CASE_SPECS = (
         "eval_prefix": "16_netherlands_autumn_full_bounded",
         "interpret_prefix": "17_netherlands_autumn_top20",
         "title_label": "Netherlands autumn",
-        "start_rule": "first_row_of_gdf_NA_10",
-        "end_rule": "last_row_of_gdf_NA_10",
+        "start_rule": "last_row_of_gdf_NA_10",
+        "end_rule": "first_row_of_gdf_NA_10",
+        "start_override_cell": "831953fffffffff",
+        "start_override_reason": "Nearest valid in-domain H3 substitute for the northern benchmark endpoint, because the direct nearest cell falls outside the ERA5-supported routing domain.",
     },
     {
         "case_key": "svalbard_autumn_afaf",
@@ -49,8 +51,8 @@ CASE_SPECS = (
         "eval_prefix": "16_svalbard_autumn_afaf_full_bounded",
         "interpret_prefix": "17_svalbard_autumn_afaf_top20",
         "title_label": "Svalbard autumn (afaf)",
-        "start_rule": "first_row_of_gdf_SA_afaf_10",
-        "end_rule": "last_row_of_gdf_SA_afaf_10",
+        "start_rule": "last_row_of_gdf_SA_afaf_10",
+        "end_rule": "first_row_of_gdf_SA_afaf_10",
     },
     {
         "case_key": "svalbard_autumn_amam",
@@ -61,8 +63,8 @@ CASE_SPECS = (
         "eval_prefix": "16_svalbard_autumn_amam_full_bounded",
         "interpret_prefix": "17_svalbard_autumn_amam_top20",
         "title_label": "Svalbard autumn (amam)",
-        "start_rule": "first_row_of_gdf_SA_amam_10",
-        "end_rule": "last_row_of_gdf_SA_amam_10",
+        "start_rule": "last_row_of_gdf_SA_amam_10",
+        "end_rule": "first_row_of_gdf_SA_amam_10",
     },
 )
 
