@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from flyway_h3.workflow_utils import assign_lat_band, route_points_from_group
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
@@ -36,21 +38,6 @@ POPULATION_MAP = {
         "title_label": "Netherlands spring",
     },
 }
-
-
-def assign_lat_band(lat: pd.Series) -> pd.Series:
-    edges = np.arange(-80, 71, 10)
-    labels = [f"({lo}, {hi}]" for lo, hi in zip(edges[:-1], edges[1:])]
-    return pd.cut(lat, bins=edges, labels=labels, include_lowest=False, right=True)
-
-
-def route_points_from_group(route: pd.DataFrame) -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "lon": [route.iloc[0]["source_lon"]] + route["target_lon"].tolist(),
-            "lat": [route.iloc[0]["source_lat"]] + route["target_lat"].tolist(),
-        }
-    )
 
 
 def lon_degree_km_at_lat(lat_deg: pd.Series, delta_lon_deg: pd.Series) -> pd.Series:

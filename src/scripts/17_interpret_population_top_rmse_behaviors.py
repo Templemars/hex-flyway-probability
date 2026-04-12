@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from flyway_h3.workflow_utils import route_points_from_group
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
@@ -36,15 +38,6 @@ POPULATION_MAP = {
         "title_label": "Netherlands spring",
     },
 }
-
-
-def route_points_from_group(route: pd.DataFrame) -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "lon": [route.iloc[0]["source_lon"]] + route["target_lon"].tolist(),
-            "lat": [route.iloc[0]["source_lat"]] + route["target_lat"].tolist(),
-        }
-    )
 
 
 def main() -> None:

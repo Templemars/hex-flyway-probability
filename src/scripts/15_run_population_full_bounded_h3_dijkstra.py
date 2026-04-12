@@ -15,6 +15,13 @@ from pathlib import Path
 import networkx as nx
 import pandas as pd
 
+from flyway_h3.workflow_utils import (
+    build_graph,
+    derive_prototype_endpoints,
+    nearest_h3_cell,
+    summarize_path,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPONENT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_components_res3.csv"
@@ -50,98 +57,6 @@ def generate_weight_sets() -> list[tuple[str, float, float, float, float]]:
             weight_sets.append((f"behavior_{idx:03d}", a, b, c, d))
             idx += 1
     return weight_sets
-
-
-def nearest_h3_cell(env: pd.DataFrame, lon: float, lat: float) -> str:
-    distance = (env["lon"] - lon) ** 2 + (env["lat"] - lat) ** 2
-    return str(env.loc[distance.idxmin(), "h3_cell"])
-
-
-def derive_prototype_endpoints(benchmark: pd.DataFrame, env: pd.DataFrame, start_rule: str, end_rule: str) -> tuple[dict, dict]:
-    start_point = benchmark.iloc[0]
-    end_point = benchmark.iloc[-1]
-    start_lon = float(start_point["lon_median10"])
-    start_lat = float(start_point["lat_median10"])
-    end_lon = float(end_point["lon_median10"])
-    end_lat = float(end_point["lat_median10"])
-    return (
-        {
-            "endpoint_role": "start",
-            "benchmark_rule": start_rule,
-            "lon": start_lon,
-            "lat": start_lat,
-            "nearest_h3_cell": nearest_h3_cell(env, start_lon, start_lat),
-        },
-        {
-            "endpoint_role": "end",
-            "benchmark_rule": end_rule,
-            "lon": end_lon,
-            "lat": end_lat,
-            "nearest_h3_cell": nearest_h3_cell(env, end_lon, end_lat),
-        },
-    )
-
-
-def build_graph(df: pd.DataFrame, cost_col: str) -> nx.DiGraph:
-    graph = nx.DiGraph()
-    for row in df.itertuples(index=False):
-        graph.add_edge(
-            row.source_h3,
-            row.target_h3,
-            weight=float(getattr(row, cost_col)),
-            edge_distance_km=float(row.edge_distance_km),
-            w_cost=float(row.w_cost),
-            c_cost=float(row.c_cost),
-            d_cost=float(row.d_cost),
-            f_cost=float(row.f_cost),
-            source_lon=float(row.source_lon),
-            source_lat=float(row.source_lat),
-            target_lon=float(row.target_lon),
-            target_lat=float(row.target_lat),
-        )
-    return graph
-
-
-def summarize_path(graph: nx.DiGraph, path: list[str], label: str) -> tuple[list[dict], dict]:
-    path_rows = []
-    total_distance = total_w = total_c = total_d = total_f = total_cost = 0.0
-    for step_index, (u, v) in enumerate(zip(path[:-1], path[1:]), start=1):
-        edge = graph[u][v]
-        total_distance += edge["edge_distance_km"]
-        total_w += edge["w_cost"]
-        total_c += edge["c_cost"]
-        total_d += edge["d_cost"]
-        total_f += edge["f_cost"]
-        total_cost += edge["weight"]
-        path_rows.append(
-            {
-                "behavior": label,
-                "step_index": step_index,
-                "source_h3": u,
-                "target_h3": v,
-                "source_lon": edge["source_lon"],
-                "source_lat": edge["source_lat"],
-                "target_lon": edge["target_lon"],
-                "target_lat": edge["target_lat"],
-                "edge_distance_km": edge["edge_distance_km"],
-                "w_cost": edge["w_cost"],
-                "c_cost": edge["c_cost"],
-                "d_cost": edge["d_cost"],
-                "f_cost": edge["f_cost"],
-                "total_edge_cost": edge["weight"],
-            }
-        )
-    return path_rows, {
-        "behavior": label,
-        "n_steps": len(path) - 1,
-        "total_distance_km": total_distance,
-        "total_cost": total_cost,
-        "mean_edge_distance_km": total_distance / max(len(path) - 1, 1),
-        "sum_w_cost": total_w,
-        "sum_c_cost": total_c,
-        "sum_d_cost": total_d,
-        "sum_f_cost": total_f,
-    }
 
 
 def main() -> None:
