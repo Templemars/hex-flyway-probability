@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Run the full bounded H3 Dijkstra behavior sweep for a chosen benchmark population.
+Run the full bounded H3 Dijkstra behavior sweep for a chosen benchmark case.
 
-Reuses the saved spring H3 graph inputs and cost-component tables. Only the
-population-specific benchmark summary and output prefixes change.
+Reuses the saved H3 graph inputs and cost-component tables. Only the case-specific
+benchmark summary and output prefixes change.
 """
 
 from __future__ import annotations
@@ -15,10 +15,10 @@ from pathlib import Path
 import networkx as nx
 import pandas as pd
 
+from flyway_h3.cases import build_case_map
 from flyway_h3.workflow_utils import (
     build_graph,
     derive_prototype_endpoints,
-    nearest_h3_cell,
     summarize_path,
 )
 
@@ -26,23 +26,8 @@ from flyway_h3.workflow_utils import (
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPONENT_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_edge_cost_components_res3.csv"
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
-BENCHMARK_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
 RESULTS_TABLE_DIR = PROJECT_ROOT / "results" / "tables"
-
-POPULATION_MAP = {
-    "svalbard_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_SS_10.csv",
-        "prefix": "15_svalbard_full_bounded_dijkstra",
-        "start_rule": "first_row_of_gdf_SS_10",
-        "end_rule": "last_row_of_gdf_SS_10",
-    },
-    "netherlands_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_NS_10.csv",
-        "prefix": "15_netherlands_full_bounded_dijkstra",
-        "start_rule": "first_row_of_gdf_NS_10",
-        "end_rule": "last_row_of_gdf_NS_10",
-    },
-}
+CASE_MAP = build_case_map(PROJECT_ROOT)
 
 
 def generate_weight_sets() -> list[tuple[str, float, float, float, float]]:
@@ -60,17 +45,17 @@ def generate_weight_sets() -> list[tuple[str, float, float, float, float]]:
 
 
 def main() -> None:
-    population_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
-    if population_key not in POPULATION_MAP:
-        raise SystemExit(f"Unknown population '{population_key}'. Choose from: {', '.join(sorted(POPULATION_MAP))}")
+    case_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
+    if case_key not in CASE_MAP:
+        raise SystemExit(f"Unknown case '{case_key}'. Choose from: {', '.join(sorted(CASE_MAP))}")
 
-    cfg = POPULATION_MAP[population_key]
-    prefix = cfg["prefix"]
-    output_route_path = RESULTS_TABLE_DIR / f"{prefix}_paths.csv"
-    output_summary_path = RESULTS_TABLE_DIR / f"{prefix}_summary.csv"
-    output_weights_path = RESULTS_TABLE_DIR / f"{prefix}_weight_sets.csv"
-    output_endpoints_path = RESULTS_TABLE_DIR / f"{prefix}_endpoints.csv"
-    failed_path = RESULTS_TABLE_DIR / f"{prefix}_failures.csv"
+    cfg = CASE_MAP[case_key]
+    route_prefix = cfg["route_prefix"]
+    output_route_path = RESULTS_TABLE_DIR / f"{route_prefix}_paths.csv"
+    output_summary_path = RESULTS_TABLE_DIR / f"{route_prefix}_summary.csv"
+    output_weights_path = RESULTS_TABLE_DIR / f"{route_prefix}_weight_sets.csv"
+    output_endpoints_path = RESULTS_TABLE_DIR / f"{route_prefix}_endpoints.csv"
+    failed_path = RESULTS_TABLE_DIR / f"{route_prefix}_failures.csv"
 
     weight_sets = generate_weight_sets()
     df = pd.read_csv(COMPONENT_PATH)
@@ -96,7 +81,7 @@ def main() -> None:
     for idx, (behavior, a, b, c, d) in enumerate(weight_sets, start=1):
         if idx == 1 or idx % 10 == 0 or idx == n_total:
             print(
-                f"[{population_key}] behavior {idx}/{n_total}: {behavior} "
+                f"[{case_key}] behavior {idx}/{n_total}: {behavior} "
                 f"weights=({a:.1f}, {b:.1f}, {c:.1f}, {d:.1f})",
                 flush=True,
             )
@@ -118,7 +103,7 @@ def main() -> None:
                     "error_message": str(exc),
                 }
             )
-            print(f"[{population_key}] failed: {behavior} ({type(exc).__name__}: {exc})", flush=True)
+            print(f"[{case_key}] failed: {behavior} ({type(exc).__name__}: {exc})", flush=True)
             continue
         path_rows, summary = summarize_path(graph, path, behavior)
         summary.update({"a_wind": a, "b_crosswind": b, "c_distance": c, "d_food": d, "status": "ok"})
@@ -139,7 +124,7 @@ def main() -> None:
     if not failed_df.empty:
         failed_df.to_csv(failed_path, index=False)
 
-    print(f"Ran full bounded H3 Dijkstra sweep for {population_key}")
+    print(f"Ran full bounded H3 Dijkstra sweep for {case_key}")
     print(f"tested behaviors: {len(weights_df)}")
     print(f"successful routes: {0 if summary_df.empty else len(summary_df)}")
     print(f"failed routes: {0 if failed_df.empty else len(failed_df)}")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Evaluate a saved full bounded population route sweep against its benchmark
-10-degree mean flyway summary using RMSE in km.
+Evaluate a saved full bounded route sweep against its benchmark 10-degree mean
+flyway summary using RMSE in km.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from flyway_h3.cases import build_case_map
 from flyway_h3.workflow_utils import assign_lat_band, route_points_from_group
 
 
@@ -23,21 +24,7 @@ RESULTS_FIGURE_DIR = PROJECT_ROOT / "results" / "figures"
 RESULTS_REPORT_DIR = PROJECT_ROOT / "results" / "reports"
 COEFFLIST_PATH = BENCHMARK_DIR / "coefflist.csv"
 ENV_PATH = PROJECT_ROOT / "data" / "processed" / "grids" / "h3_environment_res3.csv"
-
-POPULATION_MAP = {
-    "svalbard_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_SS_10.csv",
-        "route_prefix": "15_svalbard_full_bounded_dijkstra",
-        "eval_prefix": "16_svalbard_full_bounded",
-        "title_label": "Svalbard spring",
-    },
-    "netherlands_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_NS_10.csv",
-        "route_prefix": "15_netherlands_full_bounded_dijkstra",
-        "eval_prefix": "16_netherlands_full_bounded",
-        "title_label": "Netherlands spring",
-    },
-}
+CASE_MAP = build_case_map(PROJECT_ROOT)
 
 
 def lon_degree_km_at_lat(lat_deg: pd.Series, delta_lon_deg: pd.Series) -> pd.Series:
@@ -57,10 +44,10 @@ def load_old_paper_coefficients() -> pd.DataFrame:
 
 
 def main() -> None:
-    population_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
-    if population_key not in POPULATION_MAP:
-        raise SystemExit(f"Unknown population '{population_key}'. Choose from: {', '.join(sorted(POPULATION_MAP))}")
-    cfg = POPULATION_MAP[population_key]
+    case_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
+    if case_key not in CASE_MAP:
+        raise SystemExit(f"Unknown case '{case_key}'. Choose from: {', '.join(sorted(CASE_MAP))}")
+    cfg = CASE_MAP[case_key]
 
     paths_path = RESULTS_TABLE_DIR / f"{cfg['route_prefix']}_paths.csv"
     weights_path = RESULTS_TABLE_DIR / f"{cfg['route_prefix']}_weight_sets.csv"
@@ -194,7 +181,7 @@ This evaluation reuses saved route outputs and does not rerun Dijkstra simulatio
 '''
     report_path.write_text(report)
 
-    print(f"Evaluated full bounded {population_key} sweep by RMSE")
+    print(f"Evaluated full bounded {case_key} sweep by RMSE")
     print(f"behaviors ranked: {len(rmse_df)}")
     print(f"best behavior: {best['behavior']}")
     print(f"best RMSE: {best['rmse_km']:.1f} km")

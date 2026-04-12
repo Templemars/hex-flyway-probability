@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Interpret the top RMSE behaviors for a chosen benchmark population using saved
-route and RMSE outputs only.
+Interpret the top RMSE behaviors for a chosen benchmark case using saved route
+and RMSE outputs only.
 """
 
 from __future__ import annotations
@@ -13,38 +13,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from flyway_h3.cases import build_case_map
 from flyway_h3.workflow_utils import route_points_from_group
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-BENCHMARK_DIR = PROJECT_ROOT / "data" / "raw" / "benchmark_from_2025"
 RESULTS_TABLE_DIR = PROJECT_ROOT / "results" / "tables"
 RESULTS_FIGURE_DIR = PROJECT_ROOT / "results" / "figures"
 RESULTS_REPORT_DIR = PROJECT_ROOT / "results" / "reports"
-
-POPULATION_MAP = {
-    "svalbard_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_SS_10.csv",
-        "route_prefix": "15_svalbard_full_bounded_dijkstra",
-        "eval_prefix": "16_svalbard_full_bounded",
-        "interpret_prefix": "17_svalbard_top20",
-        "title_label": "Svalbard spring",
-    },
-    "netherlands_spring": {
-        "benchmark_path": BENCHMARK_DIR / "gdf_NS_10.csv",
-        "route_prefix": "15_netherlands_full_bounded_dijkstra",
-        "eval_prefix": "16_netherlands_full_bounded",
-        "interpret_prefix": "17_netherlands_top20",
-        "title_label": "Netherlands spring",
-    },
-}
+CASE_MAP = build_case_map(PROJECT_ROOT)
 
 
 def main() -> None:
-    population_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
-    if population_key not in POPULATION_MAP:
-        raise SystemExit(f"Unknown population '{population_key}'. Choose from: {', '.join(sorted(POPULATION_MAP))}")
-    cfg = POPULATION_MAP[population_key]
+    case_key = sys.argv[1] if len(sys.argv) > 1 else "svalbard_spring"
+    if case_key not in CASE_MAP:
+        raise SystemExit(f"Unknown case '{case_key}'. Choose from: {', '.join(sorted(CASE_MAP))}")
+    cfg = CASE_MAP[case_key]
 
     rmse_path = RESULTS_TABLE_DIR / f"{cfg['eval_prefix']}_rmse.csv"
     band_path = RESULTS_TABLE_DIR / f"{cfg['eval_prefix']}_route_band_summaries.csv"
@@ -55,7 +39,7 @@ def main() -> None:
     figure_coeff_scatter = RESULTS_FIGURE_DIR / f"{cfg['interpret_prefix']}_coefficient_scatter.png"
     figure_band_error = RESULTS_FIGURE_DIR / f"{cfg['interpret_prefix']}_band_errors.png"
     figure_route_agreement = RESULTS_FIGURE_DIR / f"{cfg['interpret_prefix']}_route_agreement.png"
-    report_path = RESULTS_REPORT_DIR / f"17_interpret-{population_key}-top-rmse-behaviors.md"
+    report_path = RESULTS_REPORT_DIR / f"{cfg['interpret_prefix']}_rmse_behaviors.md"
 
     rmse_df = pd.read_csv(rmse_path)
     band_df = pd.read_csv(band_path)
@@ -188,7 +172,7 @@ This interpretation reuses the saved RMSE, band-summary, and route outputs only.
 '''
     report_path.write_text(report)
 
-    print(f"Interpreted top RMSE {population_key} behaviors")
+    print(f"Interpreted top RMSE {case_key} behaviors")
     print(f"top behaviors analyzed: {len(top20)}")
     print(f"best behavior: {best['behavior']}")
     print(f"report: {report_path}")
