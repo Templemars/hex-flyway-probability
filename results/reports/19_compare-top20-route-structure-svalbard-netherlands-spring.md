@@ -35,6 +35,8 @@ This step moves from coefficient comparison to route-family geometry. That matte
 
 The route-overlay figure shows whether the top 20 good solutions form a tight corridor or a broad family in each population. The spread-by-latitude figure then makes that explicit by showing where route uncertainty or flexibility is largest. The benchmark-envelope figure helps assess whether the benchmark line sits near the center of the good-solution family or closer to one side of the envelope.
 
+To make that comparison more informative, the benchmark panel now also includes a **benchmark longitude dispersion band** built from the available `lon_sd_10` column in the benchmark summaries. This is a descriptive ±1 SD longitude ribbon around the benchmark median line for each 10° latitude band. It should not be interpreted as a confidence interval or percentile envelope, but it is still useful for showing whether the model top-20 envelope is narrower than, wider than, or offset from the benchmark's within-band dispersion.
+
 If one population has a much wider top-20 envelope, that suggests the benchmark metric tolerates a broader family of good solutions there. If the envelope is tight, the benchmark is selecting a more specific route geometry. That distinction helps explain why different coefficient structures can survive among the top RMSE solutions.
 
 ## Efficiency note

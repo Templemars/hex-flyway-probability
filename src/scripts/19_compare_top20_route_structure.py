@@ -121,6 +121,10 @@ def main() -> None:
         (axes[0], svalbard_spread, svalbard_bench, "#4c78a8", "Svalbard spring"),
         (axes[1], nl_spread, nl_bench, "#f58518", "Netherlands spring"),
     ]:
+        bench = bench.copy()
+        bench["bench_lower_sd"] = bench["lon_median10"] - bench["lon_sd_10"]
+        bench["bench_upper_sd"] = bench["lon_median10"] + bench["lon_sd_10"]
+        ax.fill_betweenx(bench["lat_median10"], bench["bench_lower_sd"], bench["bench_upper_sd"], color="grey", alpha=0.22, label="Benchmark ±1 SD longitude band")
         ax.fill_betweenx(spread["route_lat_median"], spread["lon_p10"], spread["lon_p90"], color=color, alpha=0.28, label="Top-20 envelope")
         ax.plot(spread["lon_p50"], spread["route_lat_median"], color=color, linewidth=2.3, label="Top-20 median route")
         ax.plot(bench["lon_median10"], bench["lat_median10"], color="black", linewidth=2.5, label="Benchmark median")
@@ -172,6 +176,8 @@ How do the top 20 lowest-RMSE route families differ structurally between Svalbar
 This step moves from coefficient comparison to route-family geometry. That matters because two populations can differ in top-ranked coefficients either because they genuinely prefer different movement regimes, or because their benchmark route geometries place different structural demands on the model.
 
 The route-overlay figure shows whether the top 20 good solutions form a tight corridor or a broad family in each population. The spread-by-latitude figure then makes that explicit by showing where route uncertainty or flexibility is largest. The benchmark-envelope figure helps assess whether the benchmark line sits near the center of the good-solution family or closer to one side of the envelope.
+
+To make that comparison more informative, the benchmark panel now also includes a **benchmark longitude dispersion band** built from the available `lon_sd_10` column in the benchmark summaries. This is a descriptive ±1 SD longitude ribbon around the benchmark median line for each 10° latitude band. It should not be interpreted as a confidence interval or percentile envelope, but it is still useful for showing whether the model top-20 envelope is narrower than, wider than, or offset from the benchmark's within-band dispersion.
 
 If one population has a much wider top-20 envelope, that suggests the benchmark metric tolerates a broader family of good solutions there. If the envelope is tight, the benchmark is selecting a more specific route geometry. That distinction helps explain why different coefficient structures can survive among the top RMSE solutions.
 
